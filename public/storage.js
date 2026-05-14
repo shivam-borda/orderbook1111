@@ -47,7 +47,7 @@ async function loadAllOrders(forceRefresh) {
   if (!forceRefresh && _cachedOrders) return _cachedOrders;
   if (!forceRefresh && _cachedOrdersPromise) return _cachedOrdersPromise;
 
-  _cachedOrdersPromise = (async function() {
+  _cachedOrdersPromise = (async function () {
     try {
       var res = await sbFetch('orders?select=*,fabric_rows(*),emb_rows(*),stitch_rows(*)&order=saved_at.desc');
       if (!res.ok) throw new Error('Failed to load orders');
@@ -426,7 +426,6 @@ async function editRecord(recordId) {
     var btn = document.getElementById('submit-btn');
     btn.textContent = '\u2714 Update Record';
     btn.style.background = '#e65100';
-    document.getElementById('cancel-edit-btn').style.display = 'block';
     document.getElementById('edit-mode-banner').style.display = 'block';
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -448,7 +447,6 @@ function cancelEdit() {
   btn.textContent = '\u2714 Submit Order';
   btn.style.background = '';
 
-  document.getElementById('cancel-edit-btn').style.display = 'none';
   document.getElementById('edit-mode-banner').style.display = 'none';
 
   // Reset to one blank design
