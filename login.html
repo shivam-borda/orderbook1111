@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login – Garment Order System</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f2f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .login-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 380px;
+      text-align: center;
+    }
+    .login-card img {
+      max-height: 120px;
+      width: auto;
+      margin-bottom: 20px;
+    }
+    .login-card h1 {
+      font-size: 1.2rem;
+      color: #1a237e;
+      margin-bottom: 24px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .field-group {
+      text-align: left;
+      margin-bottom: 16px;
+    }
+    .field-group label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #5c6bc0;
+      margin-bottom: 5px;
+    }
+    .field-group input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #c5cae9;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      background: #f8f9ff;
+    }
+    .field-group input:focus {
+      outline: none;
+      border-color: #3949ab;
+      background: #fff;
+    }
+    .btn-login {
+      width: 100%;
+      padding: 12px;
+      background: #3949ab;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      letter-spacing: 0.5px;
+    }
+    .btn-login:hover { background: #283593; }
+    .error-msg {
+      color: #c62828;
+      font-size: 0.85rem;
+      margin-top: 12px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-card">
+  <img src="logo.png" alt="Company Logo" />
+  <h1>Login</h1>
+  <form onsubmit="return doLogin()">
+    <div class="field-group">
+      <label>Username</label>
+      <input type="text" id="username" placeholder="Enter username" autocomplete="off" />
+    </div>
+    <div class="field-group">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="Enter password" />
+    </div>
+    <button type="submit" class="btn-login">Login</button>
+  </form>
+  <div class="error-msg" id="error-msg">Invalid username or password.</div>
+</div>
+
+<script>
+function doLogin() {
+  var user = document.getElementById('username').value.trim();
+  var pass = document.getElementById('password').value;
+
+  if (user === 'aahman' && pass === '123456') {
+    sessionStorage.setItem('loggedIn', 'true');
+    window.location.href = 'records.html';
+  } else {
+    document.getElementById('error-msg').style.display = 'block';
+  }
+  return false;
+}
+</script>
+</body>
+</html>

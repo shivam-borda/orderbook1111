@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>New Order Form – Garment Unit</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script>
+    if (sessionStorage.getItem('loggedIn') !== 'true') {
+      window.location.href = 'login.html';
+    }
+  </script>
+</head>
+<body>
+
+<div class="page-loader" id="page-loader">
+  <div class="loader-spinner"></div>
+  <div class="loader-text">Loading...</div>
+</div>
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+  <a href="records.html" class="back-link" style="flex:1;">&larr; Back to Filter</a>
+  <h1 id="page-title" style="margin-bottom:0;text-align:center;flex:2;">&#x1F9F5; New Order Form</h1>
+  <div style="flex:1;"></div>
+</div>
+
+<!-- Search / List modal (kept for edit functionality) -->
+<div class="modal-overlay" id="search-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modal-title">Search Results</h2>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<!-- Edit mode banner -->
+<div id="edit-mode-banner">
+  &#x270E; Edit Mode &mdash; You are editing an existing record. Make your changes and click <strong>Update Record</strong>.
+</div>
+
+<!-- Design blocks go here -->
+<div id="designs-container"></div>
+
+
+<button class="btn-submit" id="submit-btn" onclick="submitForm()">&#x2714; Submit Order</button>
+<button class="btn-cancel-edit" id="cancel-edit-btn" onclick="cancelEdit()">&#x2715; Cancel Edit</button>
+
+<div class="print-btns">
+  <button class="btn-print-internal" onclick="printAs('fabric')">&#x1F5A8; Print &ndash; Fabric Order</button>
+  <button class="btn-print-emb"      onclick="printAs('embroidery')">&#x1FAE7; Print &ndash; Embroidery</button>
+  <button class="btn-print-stitch"   onclick="printAs('stitch')">&#x2702;&#xFE0F; Print &ndash; Stitching Party</button>
+</div>
+
+<div id="toast"></div>
+
+<script src="form.js"></script>
+<script src="storage.js"></script>
+<script src="print.js"></script>
+<script>
+  // Boot
+  addDesign();
+
+  // Check if we need to load a record for editing (from records page)
+  (function() {
+    var params = new URLSearchParams(window.location.search);
+    var editId = params.get('edit');
+    if (editId) {
+      editRecord(editId);
+      // Fallback: force hide after 10s in case of error
+      setTimeout(function() {
+        var loader = document.getElementById('page-loader');
+        if (loader) loader.style.display = 'none';
+      }, 10000);
+    } else {
+      document.getElementById('page-loader').style.display = 'none';
+    }
+  })();
+</script>
+</body>
+</html>

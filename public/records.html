@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Records – Filter &amp; Search</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script>
+    if (sessionStorage.getItem('loggedIn') !== 'true') {
+      window.location.href = 'login.html';
+    }
+  </script>
+  <style>
+    .header-row {
+      display: flex;
+      gap: 24px;
+      align-items: stretch;
+      margin-bottom: 24px;
+    }
+    .header-col {
+      flex: 1;
+      min-width: 0;
+    }
+    .logo-col {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fff;
+      border: 1px solid #c5cae9;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+    .logo-col img {
+      max-width: 100%;
+      max-height: 200px;
+      height: auto;
+    }
+    .filter-section {
+      background: #fff;
+      border: 1px solid #c5cae9;
+      border-radius: 10px;
+      padding: 20px 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .filter-section h2 {
+      font-size: 1rem;
+      color: #1a237e;
+      margin-bottom: 16px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .filter-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .filter-fields .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .filter-fields label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #5c6bc0;
+    }
+    .filter-fields select {
+      padding: 9px 12px;
+      border: 1px solid #c5cae9;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      width: 100%;
+      background: #f8f9ff;
+      cursor: pointer;
+    }
+    .filter-fields select:focus {
+      outline: none;
+      border-color: #3949ab;
+      background: #fff;
+    }
+    /* Searchable dropdown */
+    .search-dropdown {
+      position: relative;
+      width: 100%;
+    }
+    .search-dropdown .sd-input {
+      padding: 9px 12px;
+      border: 1px solid #c5cae9;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      width: 100%;
+      background: #f8f9ff;
+      box-sizing: border-box;
+    }
+    .search-dropdown .sd-input:focus {
+      outline: none;
+      border-color: #3949ab;
+      background: #fff;
+    }
+    .search-dropdown .sd-list {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      max-height: 180px;
+      overflow-y: auto;
+      background: #fff;
+      border: 1px solid #c5cae9;
+      border-top: none;
+      border-radius: 0 0 6px 6px;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+    .search-dropdown .sd-list.open {
+      display: block;
+    }
+    .search-dropdown .sd-item {
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .search-dropdown .sd-item:hover {
+      background: #e8eaf6;
+    }
+    .search-dropdown .sd-item.active {
+      background: #3949ab;
+      color: #fff;
+    }
+    .filter-btns {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .btn-filter {
+      background: #3949ab; color: #fff; border: none;
+      border-radius: 8px; padding: 10px 24px;
+      font-size: 0.92rem; font-weight: 600; cursor: pointer;
+    }
+    .btn-filter:hover { background: #283593; }
+    .btn-clear {
+      background: #757575; color: #fff; border: none;
+      border-radius: 8px; padding: 10px 24px;
+      font-size: 0.92rem; font-weight: 600; cursor: pointer;
+    }
+    .btn-clear:hover { background: #424242; }
+    .results-section {
+      margin-top: 20px;
+    }
+    .results-count {
+      font-size: 0.9rem;
+      color: #555;
+      margin-bottom: 14px;
+      padding: 8px 12px;
+      background: #e8eaf6;
+      border-radius: 6px;
+    }
+    .no-results {
+      text-align: center;
+      color: #888;
+      padding: 40px 0;
+      font-size: 0.95rem;
+    }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 16px;
+      color: #3949ab;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    .back-link:hover { text-decoration: underline; }
+    @media (max-width: 700px) {
+      .header-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-loader" id="page-loader">
+  <div class="loader-spinner"></div>
+  <div class="loader-text">Loading...</div>
+</div>
+
+<a href="index.html" class="back-link">&larr; Back to Order Form</a>
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+  <h1 style="margin-bottom:0;">&#x1F50D; Filter Records</h1>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <a href="allrecords.html" class="btn-filter" style="text-decoration:none;text-align:center;">&#x1F4C1; View All Records</a>
+    <a href="index.html" class="btn-filter" style="text-decoration:none;text-align:center;">&#x2795; New Order</a>
+  </div>
+</div>
+
+<div class="header-row" id="header-row">
+  <!-- Left col: Logo -->
+  <div class="header-col logo-col">
+    <img src="logo.png" alt="Company Logo" />
+  </div>
+  <!-- Right col: Filters -->
+  <div class="header-col filter-section">
+    <h2>Filter Records</h2>
+    <div class="filter-fields">
+      <div class="field-group">
+        <label>Order No.</label>
+        <div class="search-dropdown" id="sd-orderno">
+          <input type="text" class="sd-input" placeholder="Search or select..." autocomplete="off" />
+          <div class="sd-list"></div>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Party Name</label>
+        <div class="search-dropdown" id="sd-party">
+          <input type="text" class="sd-input" placeholder="Search or select..." autocomplete="off" />
+          <div class="sd-list"></div>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Design No.</label>
+        <div class="search-dropdown" id="sd-dno">
+          <input type="text" class="sd-input" placeholder="Search or select..." autocomplete="off" />
+          <div class="sd-list"></div>
+        </div>
+      </div>
+      <div class="filter-btns">
+        <button class="btn-clear" onclick="clearFilters()">&#x2715; Clear All</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="filter-active-bar" style="display:none;margin-bottom:20px;">
+  <button class="btn-clear" onclick="removeFilter()" style="font-size:1rem;padding:12px 28px;">&#x2715; Remove Filter &amp; Show All</button>
+</div>
+
+<div class="results-section" id="results-section"></div>
+
+<script src="form.js"></script>
+<script src="storage.js"></script>
+<script>
+/* ─────────────────────────────────────────
+   SEARCHABLE DROPDOWN COMPONENT
+───────────────────────────────────────── */
+var dropdowns = {};
+
+function initSearchDropdown(containerId, values, defaultLabel, onChange) {
+  var container = document.getElementById(containerId);
+  var input = container.querySelector('.sd-input');
+  var list  = container.querySelector('.sd-list');
+
+  dropdowns[containerId] = { values: values, selected: '', input: input, list: list, onChange: onChange };
+
+  function renderList(filter) {
+    var filtered = values.filter(function(v) {
+      if (!filter) return true;
+      return v.toLowerCase().indexOf(filter.toLowerCase()) !== -1;
+    });
+    list.innerHTML = '<div class="sd-item" data-value="">' + defaultLabel + '</div>' +
+      filtered.map(function(v) {
+        return '<div class="sd-item" data-value="' + escHtml(v) + '">' + escHtml(v) + '</div>';
+      }).join('');
+  }
+
+  // Show list on focus
+  input.addEventListener('focus', function() {
+    renderList(input.value);
+    list.classList.add('open');
+  });
+
+  // Filter on typing
+  input.addEventListener('input', function() {
+    renderList(input.value);
+    list.classList.add('open');
+  });
+
+  // Select item on click
+  list.addEventListener('click', function(e) {
+    var item = e.target.closest('.sd-item');
+    if (!item) return;
+    var val = item.getAttribute('data-value');
+    input.value = val;
+    dropdowns[containerId].selected = val;
+    list.classList.remove('open');
+    if (onChange) onChange();
+  });
+
+  // Close on outside click
+  document.addEventListener('click', function(e) {
+    if (!container.contains(e.target)) {
+      list.classList.remove('open');
+    }
+  });
+
+  renderList('');
+}
+
+/* ─────────────────────────────────────────
+   POPULATE DROPDOWNS
+───────────────────────────────────────── */
+async function populateDropdowns() {
+  var allOrders = await loadAllOrders();
+  var orderNos = [];
+  var parties  = [];
+  var dNos     = [];
+
+  allOrders.forEach(function(order) {
+    if (order.orderNo) orderNos.push(String(order.orderNo));
+    if (order.dNo) dNos.push(order.dNo);
+    (order.fabricRows || []).forEach(function(r) {
+      if (r.partyName && r.partyName.trim()) parties.push(r.partyName.trim());
+    });
+    (order.embRows || []).forEach(function(r) {
+      if (r.partyName && r.partyName.trim()) parties.push(r.partyName.trim());
+    });
+    (order.stitchRows || []).forEach(function(r) {
+      if (r.partyName && r.partyName.trim()) parties.push(r.partyName.trim());
+    });
+  });
+
+  // Remove duplicates
+  orderNos = orderNos.filter(function(v, i, a) { return a.indexOf(v) === i; });
+  parties  = parties.filter(function(v, i, a) { return a.indexOf(v) === i; });
+  dNos     = dNos.filter(function(v, i, a) { return a.indexOf(v) === i; });
+
+  initSearchDropdown('sd-orderno', orderNos, 'All Orders', applyFilters);
+  initSearchDropdown('sd-party', parties, 'All Parties', applyFilters);
+  initSearchDropdown('sd-dno', dNos, 'All Designs', applyFilters);
+}
+
+populateDropdowns().then(function() {
+  applyFilters();
+  document.getElementById('page-loader').style.display = 'none';
+});
+
+/* ─────────────────────────────────────────
+   FILTER LOGIC — auto-apply on change
+───────────────────────────────────────── */
+async function applyFilters() {
+  var orderNo = (dropdowns['sd-orderno'] ? dropdowns['sd-orderno'].selected : '').toLowerCase();
+  var party   = (dropdowns['sd-party']   ? dropdowns['sd-party'].selected   : '').toLowerCase();
+  var dno     = (dropdowns['sd-dno']     ? dropdowns['sd-dno'].selected     : '').toLowerCase();
+
+  var hasFilter = (orderNo || party || dno);
+
+  // Show/hide header and filter-active bar
+  document.getElementById('header-row').style.display = hasFilter ? 'none' : 'flex';
+  document.getElementById('filter-active-bar').style.display = hasFilter ? 'block' : 'none';
+
+  // If no filter selected, show empty message
+  if (!hasFilter) {
+    document.getElementById('results-section').innerHTML = '<div class="no-results">Select a filter above to search records, or <a href="allrecords.html" style="color:#3949ab;font-weight:600;">view all records</a>.</div>';
+    return;
+  }
+
+  var allOrders = await loadAllOrders();
+  // Determine if this is a party-only search (no orderNo, no dno)
+  var isPartySearch = (party && !orderNo && !dno);
+
+  var results = [];
+
+  allOrders.forEach(function(order) {
+    // Filter by Order No
+    if (orderNo) {
+      var oNum = String(order.orderNo || '').toLowerCase();
+      if (oNum.indexOf(orderNo) === -1) return;
+    }
+    // Filter by Design No
+    if (dno) {
+      if ((order.dNo || '').toLowerCase().indexOf(dno) === -1) return;
+    }
+    // Filter by Party Name (in fabric, embroidery or stitching rows)
+    if (party) {
+      var matchedFabric = (order.fabricRows || []).filter(function(r) {
+        return r.partyName && r.partyName.toLowerCase().indexOf(party) !== -1;
+      });
+      var matchedEmb = (order.embRows || []).filter(function(r) {
+        return r.partyName && r.partyName.toLowerCase().indexOf(party) !== -1;
+      });
+      var matchedStitch = (order.stitchRows || []).filter(function(r) {
+        return r.partyName && r.partyName.toLowerCase().indexOf(party) !== -1;
+      });
+      if (!matchedFabric.length && !matchedEmb.length && !matchedStitch.length) return;
+      // For party search, only include matched rows
+      if (isPartySearch) {
+        results.push({
+          order: order,
+          fabricRows: matchedFabric,
+          embRows: matchedEmb,
+          stitchRows: matchedStitch
+        });
+        return;
+      }
+    }
+    results.push({ order: order, embRows: null, stitchRows: null });
+  });
+
+  renderFilterResults(results, isPartySearch);
+}
+
+function clearFilters() {
+  if (dropdowns['sd-orderno']) { dropdowns['sd-orderno'].selected = ''; dropdowns['sd-orderno'].input.value = ''; }
+  if (dropdowns['sd-party'])   { dropdowns['sd-party'].selected = '';   dropdowns['sd-party'].input.value = ''; }
+  if (dropdowns['sd-dno'])     { dropdowns['sd-dno'].selected = '';     dropdowns['sd-dno'].input.value = ''; }
+  applyFilters();
+}
+
+function removeFilter() {
+  clearFilters();
+}
+
+function goEdit(recordId) {
+  window.location.href = 'index.html?edit=' + encodeURIComponent(recordId);
+}
+
+async function deleteFromRecords(recordId) {
+  if (!confirm('Delete this record? This cannot be undone.')) return;
+  await deleteOrderApi(recordId);
+  await populateDropdowns();
+  await applyFilters();
+}
+
+function renderFilterResults(results, isPartySearch) {
+  var container = document.getElementById('results-section');
+
+  if (!results.length) {
+    container.innerHTML = '<div class="no-results">No matching records found.</div>';
+    return;
+  }
+
+  var countHtml = '<div class="results-count">Found ' + results.length + ' record' + (results.length > 1 ? 's' : '') + '</div>';
+
+  var thF = 'background:#3949ab;color:#fff;padding:6px 8px;text-align:center;border:1px solid rgba(255,255,255,0.2);white-space:nowrap;';
+  var thE = 'background:#6a1b9a;color:#fff;padding:6px 8px;text-align:center;border:1px solid rgba(255,255,255,0.2);white-space:nowrap;';
+  var thS = 'background:#00695c;color:#fff;padding:6px 8px;text-align:center;border:1px solid rgba(255,255,255,0.2);white-space:nowrap;';
+
+  var cardsHtml = results.map(function(item) {
+    var order = item.order;
+    var imgTag = order.image
+      ? '<img src="' + order.image + '" style="width:70px;height:70px;object-fit:cover;border-radius:6px;border:1px solid #ccc;margin-right:12px;flex-shrink:0;" />'
+      : '';
+
+    // For party search: show only matched emb/stitch rows
+    // For order/dno search: show all sections including fabric
+    var fabricData = isPartySearch ? (item.fabricRows || []) : (order.fabricRows || []);
+    var embData    = isPartySearch ? (item.embRows || []) : (order.embRows || []);
+    var stitchData = isPartySearch ? (item.stitchRows || []) : (order.stitchRows || []);
+
+    var fabricSection = '';
+    if (!isPartySearch || fabricData.length) {
+      var fabricRowsHtml = fabricData.map(function(r, i) {
+        return '<tr><td>' + (i+1) + '</td>' +
+          '<td>' + escHtml(r.partyName) + '</td><td>' + escHtml(r.fabricName) + '</td><td>' + escHtml(r.colour) + '</td>' +
+          '<td>' + escHtml(r.workFab) + '</td><td>' + escHtml(r.plainFab) + '</td>' +
+          '<td>' + escHtml(r.totalFab) + '</td><td>' + escHtml(r.receivedFab) + '</td><td>' + escHtml(r.workPcs) + '</td></tr>';
+      }).join('');
+      if (fabricRowsHtml) {
+        fabricSection =
+          '<div class="record-table-wrap">' +
+            '<div style="' + thF + 'border-radius:5px 5px 0 0;display:block;padding:5px 10px;">&#x1F9F5; Fabric Order Details</div>' +
+            '<table class="record-table"><thead><tr>' +
+              '<th style="' + thF + '">#</th>' +
+              '<th style="' + thF + '">Party Name</th><th style="' + thF + '">Fabric Name</th><th style="' + thF + '">Colour</th>' +
+              '<th style="' + thF + '">Work Fab</th><th style="' + thF + '">Plain Fab</th>' +
+              '<th style="' + thF + '">Total Fab</th><th style="' + thF + '">Received Fab</th><th style="' + thF + '">Work Pcs</th>' +
+            '</tr></thead><tbody>' + fabricRowsHtml + '</tbody></table>' +
+          '</div>';
+      }
+    }
+
+    var embRowsHtml = embData.map(function(r, i) {
+      return '<tr><td>' + (i+1) + '</td>' +
+        '<td>' + escHtml(r.partyName) + '</td><td>' + escHtml(r.date) + '</td>' +
+        '<td>' + escHtml(r.sentFront) + '</td><td>' + escHtml(r.sentBack) + '</td>' +
+        '<td>' + escHtml(r.sentSleeve) + '</td>' +
+        '<td>' + escHtml(r.returnFront) + '</td><td>' + escHtml(r.returnBack) + '</td>' +
+        '<td>' + escHtml(r.returnSleeve) + '</td></tr>';
+    }).join('');
+
+    var stitchRowsHtml = stitchData.map(function(r, i) {
+      return '<tr><td>' + (i+1) + '</td>' +
+        '<td>' + escHtml(r.partyName) + '</td><td>' + escHtml(r.sentDate) + '</td>' +
+        '<td>' + escHtml(r.expectedPcs) + '</td><td>' + escHtml(r.receivedPcs) + '</td></tr>';
+    }).join('');
+
+    var embSection = embRowsHtml ? (
+      '<div class="record-table-wrap">' +
+        '<div style="' + thE + 'border-radius:5px 5px 0 0;display:block;padding:5px 10px;">&#x1FAE7; Embroidery Pipeline</div>' +
+        '<table class="record-table"><thead><tr>' +
+          '<th style="' + thE + '">#</th>' +
+          '<th style="' + thE + '">Party Name</th><th style="' + thE + '">Date</th>' +
+          '<th style="' + thE + '">Sent Front</th><th style="' + thE + '">Sent Back</th><th style="' + thE + '">Sent Sleeve</th>' +
+          '<th style="' + thE + '">Ret Front</th><th style="' + thE + '">Ret Back</th><th style="' + thE + '">Ret Sleeve</th>' +
+        '</tr></thead><tbody>' + embRowsHtml + '</tbody></table>' +
+      '</div>'
+    ) : '';
+
+    var stitchSection = stitchRowsHtml ? (
+      '<div class="record-table-wrap">' +
+        '<div style="' + thS + 'border-radius:5px 5px 0 0;display:block;padding:5px 10px;">&#x2702;&#xFE0F; Stitching Pipeline</div>' +
+        '<table class="record-table"><thead><tr>' +
+          '<th style="' + thS + '">#</th>' +
+          '<th style="' + thS + '">Party Name</th><th style="' + thS + '">Sent Date</th>' +
+          '<th style="' + thS + '">Expected Pcs</th><th style="' + thS + '">Received Pcs</th>' +
+        '</tr></thead><tbody>' + stitchRowsHtml + '</tbody></table>' +
+      '</div>'
+    ) : '';
+
+    return (
+      '<div class="record-card" style="margin-bottom:20px;">' +
+        '<div class="record-card-header">' +
+          '<div style="display:flex;align-items:center;">' +
+            imgTag +
+            '<div>' +
+              '<strong style="color:#e65100;font-size:1.1rem;">Order No: ' + escHtml(order.orderNo || '—') + '</strong><br/>' +
+              '<strong>D No: ' + escHtml(order.dNo) + '</strong><br/>' +
+              '<span class="meta">Fabric: ' + escHtml(order.fabric) +
+                ' &nbsp;|&nbsp; Date: ' + escHtml(order.date) + '</span><br/>' +
+              '<span class="meta" style="color:#aaa;">Saved: ' + escHtml(order.savedAt) + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div style="display:flex;gap:8px;">' +
+            '<button class="btn-edit-record" onclick="goEdit(\'' + order.id + '\')">&#x270E; Edit</button>' +
+            '<button class="btn-delete-record" onclick="deleteFromRecords(\'' + order.id + '\')">&#x1F5D1; Delete</button>' +
+          '</div>' +
+        '</div>' +
+        fabricSection + embSection + stitchSection +
+      '</div>'
+    );
+  }).join('');
+
+  container.innerHTML = countHtml + cardsHtml;
+}
+
+// Allow Enter key to trigger search
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') applyFilters();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>All Records</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script>
+    if (sessionStorage.getItem('loggedIn') !== 'true') {
+      window.location.href = 'login.html';
+    }
+  </script>
+  <style>
+    .back-link {
+      display: inline-block;
+      margin-bottom: 16px;
+      color: #3949ab;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    .back-link:hover { text-decoration: underline; }
+    .results-count {
+      font-size: 0.9rem;
+      color: #555;
+      margin-bottom: 14px;
+      padding: 8px 12px;
+      background: #e8eaf6;
+      border-radius: 6px;
+    }
+    .no-results {
+      text-align: center;
+      color: #888;
+      padding: 40px 0;
+      font-size: 0.95rem;
+    }
+    .btn-nav {
+      background: #3949ab; color: #fff; border: none;
+      border-radius: 8px; padding: 10px 24px;
+      font-size: 0.92rem; font-weight: 600; cursor: pointer;
+      text-decoration: none; text-align: center;
+    }
+    .btn-nav:hover { background: #283593; }
+  </style>
+</head>
+<body>
+
+<div class="page-loader" id="page-loader">
+  <div class="loader-spinner"></div>
+  <div class="loader-text">Loading...</div>
+</div>
+
+<a href="records.html" class="back-link">&larr; Back to Filter</a>
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+  <h1 style="margin-bottom:0;">&#x1F4C1; All Records</h1>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <a href="records.html" class="btn-nav">&#x1F50D; Filter Records</a>
+    <a href="index.html" class="btn-nav">&#x2795; New Order</a>
+  </div>
+</div>
+
+<div id="records-container"></div>
+
+<script src="form.js"></script>
+<script src="storage.js"></script>
+<script>
+/* ─────────────────────────────────────────
+   LOAD AND DISPLAY ALL RECORDS
+───────────────────────────────────────── */
+async function loadAllRecords() {
+  var allOrders = await loadAllOrders();
+
+  var container = document.getElementById('records-container');
+
+  if (!allOrders.length) {
+    container.innerHTML = '<div class="no-results">No saved records yet.</div>';
+    document.getElementById('page-loader').style.display = 'none';
+    return;
+  }
+
+  var countHtml = '<div class="results-count">Total: ' + allOrders.length + ' record' + (allOrders.length > 1 ? 's' : '') + '</div>';
+
+  var thF = 'background:#3949ab;color:#fff;padding:6px 8px;text-align:center;border:1px solid rgba(255,255,255,0.2);white-space:nowrap;';
+  var thE = 'background:#6a1b9a;color:#fff;padding:6px 8px;text-align:center;border:1px solid rgba(255,255,255,0.2);white-space:nowrap;';
+  var thS = 'background:#00695c;color:#fff;padding:6px 8px;text-align:center;border:1px solid rgba(255,255,255,0.2);white-space:nowrap;';
+
+  var cardsHtml = allOrders.map(function(order) {
+    var imgTag = order.image
+      ? '<img src="' + order.image + '" style="width:70px;height:70px;object-fit:cover;border-radius:6px;border:1px solid #ccc;margin-right:12px;flex-shrink:0;" />'
+      : '';
+
+    var fabricRowsHtml = (order.fabricRows || []).map(function(r, i) {
+      return '<tr><td>' + (i+1) + '</td>' +
+        '<td>' + escHtml(r.partyName) + '</td><td>' + escHtml(r.fabricName) + '</td><td>' + escHtml(r.colour) + '</td>' +
+        '<td>' + escHtml(r.workFab) + '</td><td>' + escHtml(r.plainFab) + '</td>' +
+        '<td>' + escHtml(r.totalFab) + '</td><td>' + escHtml(r.receivedFab) + '</td><td>' + escHtml(r.workPcs) + '</td></tr>';
+    }).join('');
+
+    var fabricSection = fabricRowsHtml ? (
+      '<div class="record-table-wrap">' +
+        '<div style="' + thF + 'border-radius:5px 5px 0 0;display:block;padding:5px 10px;">&#x1F9F5; Fabric Order Details</div>' +
+        '<table class="record-table"><thead><tr>' +
+          '<th style="' + thF + '">#</th>' +
+          '<th style="' + thF + '">Party Name</th><th style="' + thF + '">Fabric Name</th><th style="' + thF + '">Colour</th>' +
+          '<th style="' + thF + '">Work Fab</th><th style="' + thF + '">Plain Fab</th>' +
+          '<th style="' + thF + '">Total Fab</th><th style="' + thF + '">Received Fab</th><th style="' + thF + '">Work Pcs</th>' +
+        '</tr></thead><tbody>' + fabricRowsHtml + '</tbody></table>' +
+      '</div>'
+    ) : '';
+
+    var embRowsHtml = (order.embRows || []).map(function(r, i) {
+      return '<tr><td>' + (i+1) + '</td>' +
+        '<td>' + escHtml(r.partyName) + '</td><td>' + escHtml(r.date) + '</td>' +
+        '<td>' + escHtml(r.sentFront) + '</td><td>' + escHtml(r.sentBack) + '</td>' +
+        '<td>' + escHtml(r.sentSleeve) + '</td>' +
+        '<td>' + escHtml(r.returnFront) + '</td><td>' + escHtml(r.returnBack) + '</td>' +
+        '<td>' + escHtml(r.returnSleeve) + '</td></tr>';
+    }).join('');
+
+    var embSection = embRowsHtml ? (
+      '<div class="record-table-wrap">' +
+        '<div style="' + thE + 'border-radius:5px 5px 0 0;display:block;padding:5px 10px;">&#x1FAE7; Embroidery Pipeline</div>' +
+        '<table class="record-table"><thead><tr>' +
+          '<th style="' + thE + '">#</th>' +
+          '<th style="' + thE + '">Party Name</th><th style="' + thE + '">Date</th>' +
+          '<th style="' + thE + '">Sent Front</th><th style="' + thE + '">Sent Back</th><th style="' + thE + '">Sent Sleeve</th>' +
+          '<th style="' + thE + '">Ret Front</th><th style="' + thE + '">Ret Back</th><th style="' + thE + '">Ret Sleeve</th>' +
+        '</tr></thead><tbody>' + embRowsHtml + '</tbody></table>' +
+      '</div>'
+    ) : '';
+
+    var stitchRowsHtml = (order.stitchRows || []).map(function(r, i) {
+      return '<tr><td>' + (i+1) + '</td>' +
+        '<td>' + escHtml(r.partyName) + '</td><td>' + escHtml(r.sentDate) + '</td>' +
+        '<td>' + escHtml(r.expectedPcs) + '</td><td>' + escHtml(r.receivedPcs) + '</td></tr>';
+    }).join('');
+
+    var stitchSection = stitchRowsHtml ? (
+      '<div class="record-table-wrap">' +
+        '<div style="' + thS + 'border-radius:5px 5px 0 0;display:block;padding:5px 10px;">&#x2702;&#xFE0F; Stitching Pipeline</div>' +
+        '<table class="record-table"><thead><tr>' +
+          '<th style="' + thS + '">#</th>' +
+          '<th style="' + thS + '">Party Name</th><th style="' + thS + '">Sent Date</th>' +
+          '<th style="' + thS + '">Expected Pcs</th><th style="' + thS + '">Received Pcs</th>' +
+        '</tr></thead><tbody>' + stitchRowsHtml + '</tbody></table>' +
+      '</div>'
+    ) : '';
+
+    var detailId = 'detail-' + (order.id || idx);
+
+    return (
+      '<div class="record-card" style="margin-bottom:20px;">' +
+        '<div class="record-card-header">' +
+          '<div style="display:flex;align-items:center;">' +
+            imgTag +
+            '<div>' +
+              '<strong style="color:#e65100;font-size:1.1rem;">Order No: ' + escHtml(order.orderNo || '—') + '</strong><br/>' +
+              '<strong>D No: ' + escHtml(order.dNo) + '</strong><br/>' +
+              '<span class="meta">Fabric: ' + escHtml(order.fabric) +
+                ' &nbsp;|&nbsp; Date: ' + escHtml(order.date) + '</span><br/>' +
+              '<span class="meta" style="color:#aaa;">Saved: ' + escHtml(order.savedAt) + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+            '<button class="btn-detail-record" onclick="toggleDetails(\'' + detailId + '\', this)">&#x1F4CB; Details</button>' +
+            '<button class="btn-edit-record" onclick="goEdit(\'' + order.id + '\')">&#x270E; Edit</button>' +
+            '<button class="btn-delete-record" onclick="deleteFromRecords(\'' + order.id + '\')">&#x1F5D1; Delete</button>' +
+          '</div>' +
+        '</div>' +
+        '<div id="' + detailId + '" style="display:none;">' +
+          fabricSection + embSection + stitchSection +
+        '</div>' +
+      '</div>'
+    );
+  }).join('');
+
+  container.innerHTML = countHtml + cardsHtml;
+  document.getElementById('page-loader').style.display = 'none';
+}
+
+function goEdit(recordId) {
+  window.location.href = 'index.html?edit=' + encodeURIComponent(recordId);
+}
+
+function toggleDetails(detailId, btn) {
+  var el = document.getElementById(detailId);
+  if (el.style.display === 'none') {
+    el.style.display = 'block';
+    btn.innerHTML = '&#x1F4CB; Hide';
+  } else {
+    el.style.display = 'none';
+    btn.innerHTML = '&#x1F4CB; Details';
+  }
+}
+
+async function deleteFromRecords(recordId) {
+  if (!confirm('Delete this record? This cannot be undone.')) return;
+  await deleteOrderApi(recordId);
+  loadAllRecords();
+}
+
+// Boot
+loadAllRecords();
+</script>
+</body>
+</html>
