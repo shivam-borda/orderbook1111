@@ -35,6 +35,34 @@ function sbFetch(path, options) {
 /* ─────────────────────────────────────────
    LOAD ALL ORDERS
 ───────────────────────────────────────── */
+/* ─────────────────────────────────────────
+   LOAD ORDERS (Paged or Filtered)
+───────────────────────────────────────── */
+async function loadOrdersPaged(options) {
+  var limit = options.limit || 20;
+  var offset = options.offset || 0;
+  var onlyBasic = options.onlyBasic !== false;
+  var query = options.query || '';
+  
+  var select = onlyBasic 
+    ? 'id,order_no,d_no,fabric,date,image,saved_at'
+    : '*,fabric_rows(*),emb_rows(*),stitch_rows(*)';
+    
+  var path = 'orders?select=' + select + '&order=saved_at.desc&limit=' + limit + '&offset=' + offset;
+  
+  if (query) {
+    path += '&d_no=ilike.*' + encodeURIComponent(query) + '*';
+  }
+
+  var res = await sbFetch(path);
+  if (!res.ok) throw new Error('Failed to load orders');
+  var data = await res.json();
+  return (data || []).map(mapOrder);
+}
+
+/* ─────────────────────────────────────────
+   LOAD ALL ORDERS (with optional basic fetch)
+───────────────────────────────────────── */
 var _cachedOrders = null;
 var _cachedOrdersPromise = null;
 var CACHE_KEY = 'sb_orders_cache_v1';
@@ -45,53 +73,63 @@ function clearOrdersCache() {
   try { localStorage.removeItem(CACHE_KEY); } catch (e) {}
 }
 
-async function loadAllOrders(forceRefresh) {
-  if (!forceRefresh && _cachedOrders) return _cachedOrders;
+async function loadAllOrders(options) {
+  var forceRefresh = options && options.forceRefresh;
+  var select = (options && options.select) || '*,fabric_rows(*),emb_rows(*),stitch_rows(*)';
+  
+  // If we already have cached orders in memory (and it has the required columns), return them
+  // For simplicity, we only cache the "full" fetch in memory
+  if (!forceRefresh && _cachedOrders && select.indexOf('*') !== -1) return _cachedOrders;
 
-  // Try loading from localStorage first for instant results
-  if (!forceRefresh) {
+  // Try loading from localStorage first
+  if (!forceRefresh && select.indexOf('*') !== -1) {
     try {
       const localData = localStorage.getItem(CACHE_KEY);
       if (localData) {
         _cachedOrders = JSON.parse(localData);
-        // Kick off background refresh to update the cache silently
         fetchAndCacheOrders(); 
         return _cachedOrders;
       }
-    } catch (e) {
-      console.warn('Cache parse error:', e);
-    }
+    } catch (e) {}
   }
 
-  return fetchAndCacheOrders();
+  return fetchAndCacheOrders(select);
 }
 
-async function fetchAndCacheOrders() {
-  if (_cachedOrdersPromise) return _cachedOrdersPromise;
+async function fetchAndCacheOrders(select) {
+  select = select || '*,fabric_rows(*),emb_rows(*),stitch_rows(*)';
+  var isFull = select.indexOf('*') !== -1;
+  
+  if (isFull && _cachedOrdersPromise) return _cachedOrdersPromise;
 
-  _cachedOrdersPromise = (async function () {
+  var promise = (async function () {
     try {
-      var res = await sbFetch('orders?select=*,fabric_rows(*),emb_rows(*),stitch_rows(*)&order=saved_at.desc');
+      var res = await sbFetch('orders?select=' + select + '&order=saved_at.desc');
       if (!res.ok) throw new Error('Failed to load orders');
       var data = await res.json();
       var mapped = (data || []).map(mapOrder);
       
-      _cachedOrders = mapped;
-      try { localStorage.setItem(CACHE_KEY, JSON.stringify(mapped)); } catch (e) {}
+      if (isFull) {
+        _cachedOrders = mapped;
+        try { localStorage.setItem(CACHE_KEY, JSON.stringify(mapped)); } catch (e) {}
+      }
       
       return mapped;
     } catch (e) {
       console.error('loadAllOrders error:', e);
-      return _cachedOrders || []; // Return stale cache if fetch fails
+      return isFull ? (_cachedOrders || []) : []; 
     } finally {
-      _cachedOrdersPromise = null;
+      if (isFull) _cachedOrdersPromise = null;
     }
   })();
-  return _cachedOrdersPromise;
+
+  if (isFull) _cachedOrdersPromise = promise;
+  return promise;
 }
 
+
 /* ─────────────────────────────────────────
-   LOAD SINGLE ORDER
+   LOAD SINGLE ORDER / DETAILS
 ───────────────────────────────────────── */
 async function loadOrder(id) {
   var res = await sbFetch('orders?select=*,fabric_rows(*),emb_rows(*),stitch_rows(*)&id=eq.' + id);
@@ -101,8 +139,21 @@ async function loadOrder(id) {
   return mapOrder(data[0]);
 }
 
+async function loadOrderDetails(id) {
+  var res = await sbFetch('orders?select=fabric_rows(*),emb_rows(*),stitch_rows(*)&id=eq.' + id);
+  if (!res.ok) throw new Error('Failed to load order details');
+  var data = await res.json();
+  if (!data || !data.length) throw new Error('Not found');
+  var o = data[0];
+  return {
+    fabricRows: (o.fabric_rows || []).map(mapFabricRow),
+    embRows: (o.emb_rows || []).map(mapEmbRow),
+    stitchRows: (o.stitch_rows || []).map(mapStitchRow)
+  };
+}
+
 /* ─────────────────────────────────────────
-   MAP DB ROW TO FRONTEND FORMAT
+   MAPPING HELPERS
 ───────────────────────────────────────── */
 function mapOrder(o) {
   return {
@@ -113,40 +164,47 @@ function mapOrder(o) {
     fabric: o.fabric,
     date: o.date,
     image: o.image,
-    fabricRows: (o.fabric_rows || []).map(function (r) {
-      return {
-        partyName: r.party_name,
-        fabricName: r.fabric_name,
-        colour: r.colour,
-        workFab: r.work_fab,
-        plainFab: r.plain_fab,
-        totalFab: r.total_fab,
-        receivedFab: r.received_fab,
-        workPcs: r.work_pcs
-      };
-    }),
-    embRows: (o.emb_rows || []).map(function (r) {
-      return {
-        partyName: r.party_name,
-        date: r.date,
-        sentFront: r.sent_front,
-        sentBack: r.sent_back,
-        sentSleeve: r.sent_sleeve,
-        returnFront: r.return_front,
-        returnBack: r.return_back,
-        returnSleeve: r.return_sleeve
-      };
-    }),
-    stitchRows: (o.stitch_rows || []).map(function (r) {
-      return {
-        partyName: r.party_name,
-        sentDate: r.sent_date,
-        expectedPcs: r.expected_pcs,
-        receivedPcs: r.received_pcs
-      };
-    })
+    fabricRows: (o.fabric_rows || []).map(mapFabricRow),
+    embRows: (o.emb_rows || []).map(mapEmbRow),
+    stitchRows: (o.stitch_rows || []).map(mapStitchRow)
   };
 }
+
+function mapFabricRow(r) {
+  return {
+    partyName: r.party_name,
+    fabricName: r.fabric_name,
+    colour: r.colour,
+    workFab: r.work_fab,
+    plainFab: r.plain_fab,
+    totalFab: r.total_fab,
+    receivedFab: r.received_fab,
+    workPcs: r.work_pcs
+  };
+}
+
+function mapEmbRow(r) {
+  return {
+    partyName: r.party_name,
+    date: r.date,
+    sentFront: r.sent_front,
+    sentBack: r.sent_back,
+    sentSleeve: r.sent_sleeve,
+    returnFront: r.return_front,
+    returnBack: r.return_back,
+    returnSleeve: r.return_sleeve
+  };
+}
+
+function mapStitchRow(r) {
+  return {
+    partyName: r.party_name,
+    sentDate: r.sent_date,
+    expectedPcs: r.expected_pcs,
+    receivedPcs: r.received_pcs
+  };
+}
+
 
 /* ─────────────────────────────────────────
    SAVE NEW ORDER

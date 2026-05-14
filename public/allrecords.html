@@ -66,91 +66,64 @@
 <script src="storage.js"></script>
 <script>
 /* ─────────────────────────────────────────
-   LOAD AND DISPLAY ALL RECORDS
+   PAGINATION & STATE
 ───────────────────────────────────────── */
-async function loadAllRecords() {
-  var allOrders = await loadAllOrders();
+var currentPage = 0;
+var pageSize = 10;
+var allLoaded = false;
+var currentSearch = '';
+var searchTimeout = null;
 
+/* ─────────────────────────────────────────
+   LOAD AND DISPLAY RECORDS
+───────────────────────────────────────── */
+async function loadMoreRecords(isInitial) {
+  if (isInitial) {
+    currentPage = 0;
+    allLoaded = false;
+    document.getElementById('records-container').innerHTML = '';
+    document.getElementById('page-loader').style.display = 'flex';
+  }
+
+  try {
+    var orders = await loadOrdersPaged({
+      limit: pageSize,
+      offset: currentPage * pageSize,
+      query: currentSearch,
+      onlyBasic: true
+    });
+
+    if (orders.length < pageSize) {
+      allLoaded = true;
+    }
+
+    renderOrders(orders, isInitial);
+    currentPage++;
+  } catch (e) {
+    console.error('Error loading records:', e);
+  }
+
+  document.getElementById('page-loader').style.display = 'none';
+  updateLoadMoreButton();
+}
+
+function renderOrders(orders, isInitial) {
   var container = document.getElementById('records-container');
-
-  if (!allOrders.length) {
-    container.innerHTML = '<div class="no-results">No saved records yet.</div>';
-    document.getElementById('page-loader').style.display = 'none';
+  
+  if (isInitial && !orders.length) {
+    container.innerHTML = '<div class="no-results">No records found matching "' + escHtml(currentSearch) + '".</div>';
     return;
   }
 
-  var countHtml = '<div class="results-count">Total: ' + allOrders.length + ' record' + (allOrders.length > 1 ? 's' : '') + '</div>';
-
-  var thF = 'background:#3949ab;color:#fff;padding:6px 8px;text-align:center;border:1px solid rgba(255,255,255,0.2);white-space:nowrap;';
-  var thE = 'background:#6a1b9a;color:#fff;padding:6px 8px;text-align:center;border:1px solid rgba(255,255,255,0.2);white-space:nowrap;';
-  var thS = 'background:#00695c;color:#fff;padding:6px 8px;text-align:center;border:1px solid rgba(255,255,255,0.2);white-space:nowrap;';
-
-  var cardsHtml = allOrders.map(function(order) {
+  var html = orders.map(function(order) {
     var imgTag = order.image
       ? '<img src="' + order.image + '" style="width:70px;height:70px;object-fit:cover;border-radius:6px;border:1px solid #ccc;margin-right:12px;flex-shrink:0;" />'
       : '';
 
-    var fabricRowsHtml = (order.fabricRows || []).map(function(r, i) {
-      return '<tr><td>' + (i+1) + '</td>' +
-        '<td>' + escHtml(r.partyName) + '</td><td>' + escHtml(r.fabricName) + '</td><td>' + escHtml(r.colour) + '</td>' +
-        '<td>' + escHtml(r.workFab) + '</td><td>' + escHtml(r.plainFab) + '</td>' +
-        '<td>' + escHtml(r.totalFab) + '</td><td>' + escHtml(r.receivedFab) + '</td><td>' + escHtml(r.workPcs) + '</td></tr>';
-    }).join('');
-
-    var fabricSection = fabricRowsHtml ? (
-      '<div class="record-table-wrap">' +
-        '<div style="' + thF + 'border-radius:5px 5px 0 0;display:block;padding:5px 10px;">&#x1F9F5; Fabric Order Details</div>' +
-        '<table class="record-table"><thead><tr>' +
-          '<th style="' + thF + '">#</th>' +
-          '<th style="' + thF + '">Party Name</th><th style="' + thF + '">Fabric Name</th><th style="' + thF + '">Colour</th>' +
-          '<th style="' + thF + '">Work Fab</th><th style="' + thF + '">Plain Fab</th>' +
-          '<th style="' + thF + '">Total Fab</th><th style="' + thF + '">Received Fab</th><th style="' + thF + '">Work Pcs</th>' +
-        '</tr></thead><tbody>' + fabricRowsHtml + '</tbody></table>' +
-      '</div>'
-    ) : '';
-
-    var embRowsHtml = (order.embRows || []).map(function(r, i) {
-      return '<tr><td>' + (i+1) + '</td>' +
-        '<td>' + escHtml(r.partyName) + '</td><td>' + escHtml(r.date) + '</td>' +
-        '<td>' + escHtml(r.sentFront) + '</td><td>' + escHtml(r.sentBack) + '</td>' +
-        '<td>' + escHtml(r.sentSleeve) + '</td>' +
-        '<td>' + escHtml(r.returnFront) + '</td><td>' + escHtml(r.returnBack) + '</td>' +
-        '<td>' + escHtml(r.returnSleeve) + '</td></tr>';
-    }).join('');
-
-    var embSection = embRowsHtml ? (
-      '<div class="record-table-wrap">' +
-        '<div style="' + thE + 'border-radius:5px 5px 0 0;display:block;padding:5px 10px;">&#x1FAE7; Embroidery Pipeline</div>' +
-        '<table class="record-table"><thead><tr>' +
-          '<th style="' + thE + '">#</th>' +
-          '<th style="' + thE + '">Party Name</th><th style="' + thE + '">Date</th>' +
-          '<th style="' + thE + '">Sent Front</th><th style="' + thE + '">Sent Back</th><th style="' + thE + '">Sent Sleeve</th>' +
-          '<th style="' + thE + '">Ret Front</th><th style="' + thE + '">Ret Back</th><th style="' + thE + '">Ret Sleeve</th>' +
-        '</tr></thead><tbody>' + embRowsHtml + '</tbody></table>' +
-      '</div>'
-    ) : '';
-
-    var stitchRowsHtml = (order.stitchRows || []).map(function(r, i) {
-      return '<tr><td>' + (i+1) + '</td>' +
-        '<td>' + escHtml(r.partyName) + '</td><td>' + escHtml(r.sentDate) + '</td>' +
-        '<td>' + escHtml(r.expectedPcs) + '</td><td>' + escHtml(r.receivedPcs) + '</td></tr>';
-    }).join('');
-
-    var stitchSection = stitchRowsHtml ? (
-      '<div class="record-table-wrap">' +
-        '<div style="' + thS + 'border-radius:5px 5px 0 0;display:block;padding:5px 10px;">&#x2702;&#xFE0F; Stitching Pipeline</div>' +
-        '<table class="record-table"><thead><tr>' +
-          '<th style="' + thS + '">#</th>' +
-          '<th style="' + thS + '">Party Name</th><th style="' + thS + '">Sent Date</th>' +
-          '<th style="' + thS + '">Expected Pcs</th><th style="' + thS + '">Received Pcs</th>' +
-        '</tr></thead><tbody>' + stitchRowsHtml + '</tbody></table>' +
-      '</div>'
-    ) : '';
-
-    var detailId = 'detail-' + (order.id || idx);
+    var detailId = 'detail-' + order.id;
 
     return (
-      '<div class="record-card" style="margin-bottom:20px;">' +
+      '<div class="record-card" style="margin-bottom:20px;" id="card-' + order.id + '">' +
         '<div class="record-card-header">' +
           '<div style="display:flex;align-items:center;">' +
             imgTag +
@@ -163,45 +136,167 @@ async function loadAllRecords() {
             '</div>' +
           '</div>' +
           '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
-            '<button class="btn-detail-record" onclick="toggleDetails(\'' + detailId + '\', this)">&#x1F4CB; Details</button>' +
+            '<button class="btn-detail-record" onclick="toggleDetails(\'' + order.id + '\', this)">&#x1F4CB; Details</button>' +
             '<button class="btn-edit-record" onclick="goEdit(\'' + order.id + '\')">&#x270E; Edit</button>' +
             '<button class="btn-delete-record" onclick="deleteFromRecords(\'' + order.id + '\')">&#x1F5D1; Delete</button>' +
           '</div>' +
         '</div>' +
-        '<div id="' + detailId + '" style="display:none;">' +
-          fabricSection + embSection + stitchSection +
+        '<div id="' + detailId + '" style="display:none; padding: 15px; border-top: 1px solid #eee; background: #fafafa;">' +
+          '<div class="loader-spinner" style="width:24px;height:24px;margin:10px auto;border-width:3px;"></div>' +
         '</div>' +
       '</div>'
     );
   }).join('');
 
-  container.innerHTML = countHtml + cardsHtml;
-  document.getElementById('page-loader').style.display = 'none';
+  if (isInitial) {
+    container.innerHTML = html;
+  } else {
+    container.insertAdjacentHTML('beforeend', html);
+  }
+}
+
+function updateLoadMoreButton() {
+  var btn = document.getElementById('load-more-btn');
+  if (!btn) {
+    btn = document.createElement('button');
+    btn.id = 'load-more-btn';
+    btn.className = 'btn-nav';
+    btn.style.cssText = 'display:block; margin:30px auto; width:220px; background:#283593; box-shadow:0 4px 10px rgba(0,0,0,0.1);';
+    btn.onclick = function() { loadMoreRecords(false); };
+    document.body.appendChild(btn);
+  }
+  
+  btn.style.display = (allLoaded || currentPage === 0) ? 'none' : 'block';
+  btn.innerHTML = 'Load More Records';
 }
 
 function goEdit(recordId) {
   window.location.href = 'index.html?edit=' + encodeURIComponent(recordId);
 }
 
-function toggleDetails(detailId, btn) {
-  var el = document.getElementById(detailId);
+async function toggleDetails(recordId, btn) {
+  var el = document.getElementById('detail-' + recordId);
   if (el.style.display === 'none') {
     el.style.display = 'block';
     btn.innerHTML = '&#x1F4CB; Hide';
+    
+    if (el.getAttribute('data-loaded') !== 'true') {
+      try {
+        var details = await loadOrderDetails(recordId);
+        renderDetails(recordId, details);
+        el.setAttribute('data-loaded', 'true');
+      } catch (e) {
+        el.innerHTML = '<div style="color:#d32f2f;padding:10px;text-align:center;">Failed to load details.</div>';
+      }
+    }
   } else {
     el.style.display = 'none';
     btn.innerHTML = '&#x1F4CB; Details';
   }
 }
 
-async function deleteFromRecords(recordId) {
-  if (!confirm('Delete this record? This cannot be undone.')) return;
-  await deleteOrderApi(recordId);
-  loadAllRecords();
+function renderDetails(recordId, details) {
+  var el = document.getElementById('detail-' + recordId);
+  
+  var thF = 'background:#3949ab;color:#fff;padding:6px 8px;text-align:center;border:1px solid rgba(255,255,255,0.2);white-space:nowrap;';
+  var thE = 'background:#6a1b9a;color:#fff;padding:6px 8px;text-align:center;border:1px solid rgba(255,255,255,0.2);white-space:nowrap;';
+  var thS = 'background:#00695c;color:#fff;padding:6px 8px;text-align:center;border:1px solid rgba(255,255,255,0.2);white-space:nowrap;';
+
+  var fabricRowsHtml = (details.fabricRows || []).map(function(r, i) {
+    return '<tr><td>' + (i+1) + '</td>' +
+      '<td>' + escHtml(r.partyName) + '</td><td>' + escHtml(r.fabricName) + '</td><td>' + escHtml(r.colour) + '</td>' +
+      '<td>' + escHtml(r.workFab) + '</td><td>' + escHtml(r.plainFab) + '</td>' +
+      '<td>' + escHtml(r.totalFab) + '</td><td>' + escHtml(r.receivedFab) + '</td><td>' + escHtml(r.workPcs) + '</td></tr>';
+  }).join('');
+
+  var fabricSection = fabricRowsHtml ? (
+    '<div class="record-table-wrap">' +
+      '<div style="' + thF + 'border-radius:5px 5px 0 0;display:block;padding:5px 10px;">&#x1F9F5; Fabric Order Details</div>' +
+      '<table class="record-table"><thead><tr>' +
+        '<th style="' + thF + '">#</th>' +
+        '<th style="' + thF + '">Party Name</th><th style="' + thF + '">Fabric Name</th><th style="' + thF + '">Colour</th>' +
+        '<th style="' + thF + '">Work Fab</th><th style="' + thF + '">Plain Fab</th>' +
+        '<th style="' + thF + '">Total Fab</th><th style="' + thF + '">Received Fab</th><th style="' + thF + '">Work Pcs</th>' +
+      '</tr></thead><tbody>' + fabricRowsHtml + '</tbody></table>' +
+    '</div>'
+  ) : '';
+
+  var embRowsHtml = (details.embRows || []).map(function(r, i) {
+    return '<tr><td>' + (i+1) + '</td>' +
+      '<td>' + escHtml(r.partyName) + '</td><td>' + escHtml(r.date) + '</td>' +
+      '<td>' + escHtml(r.sentFront) + '</td><td>' + escHtml(r.sentBack) + '</td>' +
+      '<td>' + escHtml(r.sentSleeve) + '</td>' +
+      '<td>' + escHtml(r.returnFront) + '</td><td>' + escHtml(r.returnBack) + '</td>' +
+      '<td>' + escHtml(r.returnSleeve) + '</td></tr>';
+  }).join('');
+
+  var embSection = embRowsHtml ? (
+    '<div class="record-table-wrap">' +
+      '<div style="' + thE + 'border-radius:5px 5px 0 0;display:block;padding:5px 10px;">&#x1FAE7; Embroidery Pipeline</div>' +
+      '<table class="record-table"><thead><tr>' +
+        '<th style="' + thE + '">#</th>' +
+        '<th style="' + thE + '">Party Name</th><th style="' + thE + '">Date</th>' +
+        '<th style="' + thE + '">Sent Front</th><th style="' + thE + '">Sent Back</th><th style="' + thE + '">Sent Sleeve</th>' +
+        '<th style="' + thE + '">Ret Front</th><th style="' + thE + '">Ret Back</th><th style="' + thE + '">Ret Sleeve</th>' +
+      '</tr></thead><tbody>' + embRowsHtml + '</tbody></table>' +
+    '</div>'
+  ) : '';
+
+  var stitchRowsHtml = (details.stitchRows || []).map(function(r, i) {
+    return '<tr><td>' + (i+1) + '</td>' +
+      '<td>' + escHtml(r.partyName) + '</td><td>' + escHtml(r.sentDate) + '</td>' +
+      '<td>' + escHtml(r.expectedPcs) + '</td><td>' + escHtml(r.receivedPcs) + '</td></tr>';
+  }).join('');
+
+  var stitchSection = stitchRowsHtml ? (
+    '<div class="record-table-wrap">' +
+      '<div style="' + thS + 'border-radius:5px 5px 0 0;display:block;padding:5px 10px;">&#x2702;&#xFE0F; Stitching Pipeline</div>' +
+      '<table class="record-table"><thead><tr>' +
+        '<th style="' + thS + '">#</th>' +
+        '<th style="' + thS + '">Party Name</th><th style="' + thS + '">Sent Date</th>' +
+        '<th style="' + thS + '">Expected Pcs</th><th style="' + thS + '">Received Pcs</th>' +
+      '</tr></thead><tbody>' + stitchRowsHtml + '</tbody></table>' +
+    '</div>'
+  ) : '';
+
+  el.innerHTML = fabricSection + embSection + stitchSection;
 }
 
+async function deleteFromRecords(recordId) {
+  if (!confirm('Delete this record? This cannot be undone.')) return;
+  try {
+    await deleteOrderApi(recordId);
+    document.getElementById('card-' + recordId).remove();
+  } catch (e) {
+    alert('Delete failed.');
+  }
+}
+
+function handleSearch(val) {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(function() {
+    currentSearch = val.trim();
+    loadMoreRecords(true);
+  }, 400);
+}
+
+// Add Search UI
+document.addEventListener('DOMContentLoaded', function() {
+  var searchDiv = document.createElement('div');
+  searchDiv.style.marginBottom = '25px';
+  searchDiv.innerHTML = '<div style="position:relative;">' +
+    '<span style="position:absolute; left:12px; top:12px; color:#aaa;">&#x1F50D;</span>' +
+    '<input type="text" id="all-search" placeholder="Search by Design Number..." ' +
+    'style="width:100%; padding:12px 12px 12px 35px; border:1px solid #c5cae9; border-radius:10px; font-size:1rem; background:#f8f9ff;" ' +
+    'oninput="handleSearch(this.value)"></div>';
+  var container = document.getElementById('records-container');
+  container.parentNode.insertBefore(searchDiv, container);
+});
+
 // Boot
-loadAllRecords();
+loadMoreRecords(true);
+
+
 </script>
 </body>
 </html>

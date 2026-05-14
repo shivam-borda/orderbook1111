@@ -304,7 +304,11 @@ function initSearchDropdown(containerId, values, defaultLabel, onChange) {
    POPULATE DROPDOWNS
 ───────────────────────────────────────── */
 async function populateDropdowns() {
-  var allOrders = await loadAllOrders();
+  // Fetch only basic info + party names to populate dropdowns efficiently
+  var allOrders = await loadAllOrders({
+    select: 'order_no,d_no,fabric_rows(party_name),emb_rows(party_name),stitch_rows(party_name)'
+  });
+  
   var orderNos = [];
   var parties  = [];
   var dNos     = [];
@@ -324,14 +328,15 @@ async function populateDropdowns() {
   });
 
   // Remove duplicates
-  orderNos = orderNos.filter(function(v, i, a) { return a.indexOf(v) === i; });
-  parties  = parties.filter(function(v, i, a) { return a.indexOf(v) === i; });
-  dNos     = dNos.filter(function(v, i, a) { return a.indexOf(v) === i; });
+  orderNos = Array.from(new Set(orderNos));
+  parties  = Array.from(new Set(parties));
+  dNos     = Array.from(new Set(dNos));
 
   initSearchDropdown('sd-orderno', orderNos, 'All Orders', applyFilters);
   initSearchDropdown('sd-party', parties, 'All Parties', applyFilters);
   initSearchDropdown('sd-dno', dNos, 'All Designs', applyFilters);
 }
+
 
 populateDropdowns().then(function() {
   applyFilters();
@@ -358,7 +363,10 @@ async function applyFilters() {
     return;
   }
 
-  var allOrders = await loadAllOrders();
+  // Fetch only basic info + necessary child rows for filtering
+  var allOrders = await loadAllOrders({
+    select: 'id,order_no,d_no,fabric,date,image,saved_at,fabric_rows(party_name),emb_rows(party_name),stitch_rows(party_name)'
+  });
   // Determine if this is a party-only search (no orderNo, no dno)
   var isPartySearch = (party && !orderNo && !dno);
 
@@ -435,84 +443,16 @@ function renderFilterResults(results, isPartySearch) {
 
   var countHtml = '<div class="results-count">Found ' + results.length + ' record' + (results.length > 1 ? 's' : '') + '</div>';
 
-  var thF = 'background:#3949ab;color:#fff;padding:6px 8px;text-align:center;border:1px solid rgba(255,255,255,0.2);white-space:nowrap;';
-  var thE = 'background:#6a1b9a;color:#fff;padding:6px 8px;text-align:center;border:1px solid rgba(255,255,255,0.2);white-space:nowrap;';
-  var thS = 'background:#00695c;color:#fff;padding:6px 8px;text-align:center;border:1px solid rgba(255,255,255,0.2);white-space:nowrap;';
-
   var cardsHtml = results.map(function(item) {
     var order = item.order;
     var imgTag = order.image
       ? '<img src="' + order.image + '" style="width:70px;height:70px;object-fit:cover;border-radius:6px;border:1px solid #ccc;margin-right:12px;flex-shrink:0;" />'
       : '';
 
-    // For party search: show only matched emb/stitch rows
-    // For order/dno search: show all sections including fabric
-    var fabricData = isPartySearch ? (item.fabricRows || []) : (order.fabricRows || []);
-    var embData    = isPartySearch ? (item.embRows || []) : (order.embRows || []);
-    var stitchData = isPartySearch ? (item.stitchRows || []) : (order.stitchRows || []);
-
-    var fabricSection = '';
-    if (!isPartySearch || fabricData.length) {
-      var fabricRowsHtml = fabricData.map(function(r, i) {
-        return '<tr><td>' + (i+1) + '</td>' +
-          '<td>' + escHtml(r.partyName) + '</td><td>' + escHtml(r.fabricName) + '</td><td>' + escHtml(r.colour) + '</td>' +
-          '<td>' + escHtml(r.workFab) + '</td><td>' + escHtml(r.plainFab) + '</td>' +
-          '<td>' + escHtml(r.totalFab) + '</td><td>' + escHtml(r.receivedFab) + '</td><td>' + escHtml(r.workPcs) + '</td></tr>';
-      }).join('');
-      if (fabricRowsHtml) {
-        fabricSection =
-          '<div class="record-table-wrap">' +
-            '<div style="' + thF + 'border-radius:5px 5px 0 0;display:block;padding:5px 10px;">&#x1F9F5; Fabric Order Details</div>' +
-            '<table class="record-table"><thead><tr>' +
-              '<th style="' + thF + '">#</th>' +
-              '<th style="' + thF + '">Party Name</th><th style="' + thF + '">Fabric Name</th><th style="' + thF + '">Colour</th>' +
-              '<th style="' + thF + '">Work Fab</th><th style="' + thF + '">Plain Fab</th>' +
-              '<th style="' + thF + '">Total Fab</th><th style="' + thF + '">Received Fab</th><th style="' + thF + '">Work Pcs</th>' +
-            '</tr></thead><tbody>' + fabricRowsHtml + '</tbody></table>' +
-          '</div>';
-      }
-    }
-
-    var embRowsHtml = embData.map(function(r, i) {
-      return '<tr><td>' + (i+1) + '</td>' +
-        '<td>' + escHtml(r.partyName) + '</td><td>' + escHtml(r.date) + '</td>' +
-        '<td>' + escHtml(r.sentFront) + '</td><td>' + escHtml(r.sentBack) + '</td>' +
-        '<td>' + escHtml(r.sentSleeve) + '</td>' +
-        '<td>' + escHtml(r.returnFront) + '</td><td>' + escHtml(r.returnBack) + '</td>' +
-        '<td>' + escHtml(r.returnSleeve) + '</td></tr>';
-    }).join('');
-
-    var stitchRowsHtml = stitchData.map(function(r, i) {
-      return '<tr><td>' + (i+1) + '</td>' +
-        '<td>' + escHtml(r.partyName) + '</td><td>' + escHtml(r.sentDate) + '</td>' +
-        '<td>' + escHtml(r.expectedPcs) + '</td><td>' + escHtml(r.receivedPcs) + '</td></tr>';
-    }).join('');
-
-    var embSection = embRowsHtml ? (
-      '<div class="record-table-wrap">' +
-        '<div style="' + thE + 'border-radius:5px 5px 0 0;display:block;padding:5px 10px;">&#x1FAE7; Embroidery Pipeline</div>' +
-        '<table class="record-table"><thead><tr>' +
-          '<th style="' + thE + '">#</th>' +
-          '<th style="' + thE + '">Party Name</th><th style="' + thE + '">Date</th>' +
-          '<th style="' + thE + '">Sent Front</th><th style="' + thE + '">Sent Back</th><th style="' + thE + '">Sent Sleeve</th>' +
-          '<th style="' + thE + '">Ret Front</th><th style="' + thE + '">Ret Back</th><th style="' + thE + '">Ret Sleeve</th>' +
-        '</tr></thead><tbody>' + embRowsHtml + '</tbody></table>' +
-      '</div>'
-    ) : '';
-
-    var stitchSection = stitchRowsHtml ? (
-      '<div class="record-table-wrap">' +
-        '<div style="' + thS + 'border-radius:5px 5px 0 0;display:block;padding:5px 10px;">&#x2702;&#xFE0F; Stitching Pipeline</div>' +
-        '<table class="record-table"><thead><tr>' +
-          '<th style="' + thS + '">#</th>' +
-          '<th style="' + thS + '">Party Name</th><th style="' + thS + '">Sent Date</th>' +
-          '<th style="' + thS + '">Expected Pcs</th><th style="' + thS + '">Received Pcs</th>' +
-        '</tr></thead><tbody>' + stitchRowsHtml + '</tbody></table>' +
-      '</div>'
-    ) : '';
+    var detailId = 'detail-' + order.id;
 
     return (
-      '<div class="record-card" style="margin-bottom:20px;">' +
+      '<div class="record-card" style="margin-bottom:20px;" id="card-' + order.id + '">' +
         '<div class="record-card-header">' +
           '<div style="display:flex;align-items:center;">' +
             imgTag +
@@ -525,17 +465,109 @@ function renderFilterResults(results, isPartySearch) {
             '</div>' +
           '</div>' +
           '<div style="display:flex;gap:8px;">' +
+            '<button class="btn-detail-record" onclick="toggleDetails(\'' + order.id + '\', this)">&#x1F4CB; Details</button>' +
             '<button class="btn-edit-record" onclick="goEdit(\'' + order.id + '\')">&#x270E; Edit</button>' +
             '<button class="btn-delete-record" onclick="deleteFromRecords(\'' + order.id + '\')">&#x1F5D1; Delete</button>' +
           '</div>' +
         '</div>' +
-        fabricSection + embSection + stitchSection +
+        '<div id="' + detailId + '" style="display:none; padding: 10px; border-top: 1px solid #eee;">' +
+          '<div class="loader-spinner" style="width:20px;height:20px;margin:10px auto;"></div>' +
+        '</div>' +
       '</div>'
     );
   }).join('');
 
   container.innerHTML = countHtml + cardsHtml;
 }
+
+async function toggleDetails(recordId, btn) {
+  var el = document.getElementById('detail-' + recordId);
+  if (el.style.display === 'none') {
+    el.style.display = 'block';
+    btn.innerHTML = '&#x1F4CB; Hide';
+    
+    if (el.getAttribute('data-loaded') !== 'true') {
+      try {
+        var details = await loadOrderDetails(recordId);
+        renderDetails(recordId, details);
+        el.setAttribute('data-loaded', 'true');
+      } catch (e) {
+        el.innerHTML = '<div style="color:red;padding:10px;">Error loading details.</div>';
+      }
+    }
+  } else {
+    el.style.display = 'none';
+    btn.innerHTML = '&#x1F4CB; Details';
+  }
+}
+
+function renderDetails(recordId, details) {
+  var el = document.getElementById('detail-' + recordId);
+  
+  var thF = 'background:#3949ab;color:#fff;padding:6px 8px;text-align:center;border:1px solid rgba(255,255,255,0.2);white-space:nowrap;';
+  var thE = 'background:#6a1b9a;color:#fff;padding:6px 8px;text-align:center;border:1px solid rgba(255,255,255,0.2);white-space:nowrap;';
+  var thS = 'background:#00695c;color:#fff;padding:6px 8px;text-align:center;border:1px solid rgba(255,255,255,0.2);white-space:nowrap;';
+
+  var fabricRowsHtml = (details.fabricRows || []).map(function(r, i) {
+    return '<tr><td>' + (i+1) + '</td>' +
+      '<td>' + escHtml(r.partyName) + '</td><td>' + escHtml(r.fabricName) + '</td><td>' + escHtml(r.colour) + '</td>' +
+      '<td>' + escHtml(r.workFab) + '</td><td>' + escHtml(r.plainFab) + '</td>' +
+      '<td>' + escHtml(r.totalFab) + '</td><td>' + escHtml(r.receivedFab) + '</td><td>' + escHtml(r.workPcs) + '</td></tr>';
+  }).join('');
+
+  var fabricSection = fabricRowsHtml ? (
+    '<div class="record-table-wrap">' +
+      '<div style="' + thF + 'border-radius:5px 5px 0 0;display:block;padding:5px 10px;">&#x1F9F5; Fabric Order Details</div>' +
+      '<table class="record-table"><thead><tr>' +
+        '<th style="' + thF + '">#</th>' +
+        '<th style="' + thF + '">Party Name</th><th style="' + thF + '">Fabric Name</th><th style="' + thF + '">Colour</th>' +
+        '<th style="' + thF + '">Work Fab</th><th style="' + thF + '">Plain Fab</th>' +
+        '<th style="' + thF + '">Total Fab</th><th style="' + thF + '">Received Fab</th><th style="' + thF + '">Work Pcs</th>' +
+      '</tr></thead><tbody>' + fabricRowsHtml + '</tbody></table>' +
+    '</div>'
+  ) : '';
+
+  var embRowsHtml = (details.embRows || []).map(function(r, i) {
+    return '<tr><td>' + (i+1) + '</td>' +
+      '<td>' + escHtml(r.partyName) + '</td><td>' + escHtml(r.date) + '</td>' +
+      '<td>' + escHtml(r.sentFront) + '</td><td>' + escHtml(r.sentBack) + '</td>' +
+      '<td>' + escHtml(r.sentSleeve) + '</td>' +
+      '<td>' + escHtml(r.returnFront) + '</td><td>' + escHtml(r.returnBack) + '</td>' +
+      '<td>' + escHtml(r.returnSleeve) + '</td></tr>';
+  }).join('');
+
+  var embSection = embRowsHtml ? (
+    '<div class="record-table-wrap">' +
+      '<div style="' + thE + 'border-radius:5px 5px 0 0;display:block;padding:5px 10px;">&#x1FAE7; Embroidery Pipeline</div>' +
+      '<table class="record-table"><thead><tr>' +
+        '<th style="' + thE + '">#</th>' +
+        '<th style="' + thE + '">Party Name</th><th style="' + thE + '">Date</th>' +
+        '<th style="' + thE + '">Sent Front</th><th style="' + thE + '">Sent Back</th><th style="' + thE + '">Sent Sleeve</th>' +
+        '<th style="' + thE + '">Ret Front</th><th style="' + thE + '">Ret Back</th><th style="' + thE + '">Ret Sleeve</th>' +
+      '</tr></thead><tbody>' + embRowsHtml + '</tbody></table>' +
+    '</div>'
+  ) : '';
+
+  var stitchRowsHtml = (details.stitchRows || []).map(function(r, i) {
+    return '<tr><td>' + (i+1) + '</td>' +
+      '<td>' + escHtml(r.partyName) + '</td><td>' + escHtml(r.sentDate) + '</td>' +
+      '<td>' + escHtml(r.expectedPcs) + '</td><td>' + escHtml(r.receivedPcs) + '</td></tr>';
+  }).join('');
+
+  var stitchSection = stitchRowsHtml ? (
+    '<div class="record-table-wrap">' +
+      '<div style="' + thS + 'border-radius:5px 5px 0 0;display:block;padding:5px 10px;">&#x2702;&#xFE0F; Stitching Pipeline</div>' +
+      '<table class="record-table"><thead><tr>' +
+        '<th style="' + thS + '">#</th>' +
+        '<th style="' + thS + '">Party Name</th><th style="' + thS + '">Sent Date</th>' +
+        '<th style="' + thS + '">Expected Pcs</th><th style="' + thS + '">Received Pcs</th>' +
+      '</tr></thead><tbody>' + stitchRowsHtml + '</tbody></table>' +
+    '</div>'
+  ) : '';
+
+  el.innerHTML = fabricSection + embSection + stitchSection;
+}
+
 
 // Allow Enter key to trigger search
 document.addEventListener('keydown', function(e) {
