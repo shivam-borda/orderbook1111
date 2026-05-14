@@ -35,16 +35,33 @@ function sbFetch(path, options) {
 /* ─────────────────────────────────────────
    LOAD ALL ORDERS
 ───────────────────────────────────────── */
-async function loadAllOrders() {
-  try {
-    var res = await sbFetch('orders?select=*,fabric_rows(*),emb_rows(*),stitch_rows(*)&order=saved_at.desc');
-    if (!res.ok) throw new Error('Failed to load orders');
-    var data = await res.json();
-    return (data || []).map(mapOrder);
-  } catch (e) {
-    console.error('loadAllOrders error:', e);
-    return [];
-  }
+var _cachedOrders = null;
+var _cachedOrdersPromise = null;
+
+function clearOrdersCache() {
+  _cachedOrders = null;
+  _cachedOrdersPromise = null;
+}
+
+async function loadAllOrders(forceRefresh) {
+  if (!forceRefresh && _cachedOrders) return _cachedOrders;
+  if (!forceRefresh && _cachedOrdersPromise) return _cachedOrdersPromise;
+
+  _cachedOrdersPromise = (async function() {
+    try {
+      var res = await sbFetch('orders?select=*,fabric_rows(*),emb_rows(*),stitch_rows(*)&order=saved_at.desc');
+      if (!res.ok) throw new Error('Failed to load orders');
+      var data = await res.json();
+      _cachedOrders = (data || []).map(mapOrder);
+      return _cachedOrders;
+    } catch (e) {
+      console.error('loadAllOrders error:', e);
+      return [];
+    } finally {
+      _cachedOrdersPromise = null;
+    }
+  })();
+  return _cachedOrdersPromise;
 }
 
 /* ─────────────────────────────────────────
@@ -109,6 +126,7 @@ function mapOrder(o) {
    SAVE NEW ORDER
 ───────────────────────────────────────── */
 async function saveOrder(orderData) {
+  clearOrdersCache();
   // Insert order
   var res = await sbFetch('orders', {
     method: 'POST',
@@ -187,6 +205,7 @@ async function saveOrder(orderData) {
    UPDATE ORDER
 ───────────────────────────────────────── */
 async function updateOrder(id, orderData) {
+  clearOrdersCache();
   // Update order
   var res = await sbFetch('orders?id=eq.' + id, {
     method: 'PATCH',
@@ -265,6 +284,7 @@ async function updateOrder(id, orderData) {
    DELETE ORDER
 ───────────────────────────────────────── */
 async function deleteOrderApi(id) {
+  clearOrdersCache();
   var res = await sbFetch('orders?id=eq.' + id, { method: 'DELETE' });
   if (!res.ok) throw new Error('Failed to delete');
 }
@@ -408,7 +428,6 @@ async function editRecord(recordId) {
     btn.style.background = '#e65100';
     document.getElementById('cancel-edit-btn').style.display = 'block';
     document.getElementById('edit-mode-banner').style.display = 'block';
-    document.getElementById('btn-add-design-main').style.display = 'none';
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (e) {
@@ -431,7 +450,6 @@ function cancelEdit() {
 
   document.getElementById('cancel-edit-btn').style.display = 'none';
   document.getElementById('edit-mode-banner').style.display = 'none';
-  document.getElementById('btn-add-design-main').style.display = '';
 
   // Reset to one blank design
   document.getElementById('designs-container').innerHTML = '';
