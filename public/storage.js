@@ -37,26 +37,52 @@ function sbFetch(path, options) {
 ───────────────────────────────────────── */
 var _cachedOrders = null;
 var _cachedOrdersPromise = null;
+var CACHE_KEY = 'sb_orders_cache_v1';
 
 function clearOrdersCache() {
   _cachedOrders = null;
   _cachedOrdersPromise = null;
+  try { localStorage.removeItem(CACHE_KEY); } catch (e) {}
 }
 
 async function loadAllOrders(forceRefresh) {
   if (!forceRefresh && _cachedOrders) return _cachedOrders;
-  if (!forceRefresh && _cachedOrdersPromise) return _cachedOrdersPromise;
+
+  // Try loading from localStorage first for instant results
+  if (!forceRefresh) {
+    try {
+      const localData = localStorage.getItem(CACHE_KEY);
+      if (localData) {
+        _cachedOrders = JSON.parse(localData);
+        // Kick off background refresh to update the cache silently
+        fetchAndCacheOrders(); 
+        return _cachedOrders;
+      }
+    } catch (e) {
+      console.warn('Cache parse error:', e);
+    }
+  }
+
+  return fetchAndCacheOrders();
+}
+
+async function fetchAndCacheOrders() {
+  if (_cachedOrdersPromise) return _cachedOrdersPromise;
 
   _cachedOrdersPromise = (async function () {
     try {
       var res = await sbFetch('orders?select=*,fabric_rows(*),emb_rows(*),stitch_rows(*)&order=saved_at.desc');
       if (!res.ok) throw new Error('Failed to load orders');
       var data = await res.json();
-      _cachedOrders = (data || []).map(mapOrder);
-      return _cachedOrders;
+      var mapped = (data || []).map(mapOrder);
+      
+      _cachedOrders = mapped;
+      try { localStorage.setItem(CACHE_KEY, JSON.stringify(mapped)); } catch (e) {}
+      
+      return mapped;
     } catch (e) {
       console.error('loadAllOrders error:', e);
-      return [];
+      return _cachedOrders || []; // Return stale cache if fetch fails
     } finally {
       _cachedOrdersPromise = null;
     }
