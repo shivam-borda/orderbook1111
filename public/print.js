@@ -70,10 +70,10 @@ function printAs(mode) {
 
   designs.forEach(function(block) {
     var id      = block.id.split('-')[1];
-    var orderNo = document.getElementById('orderno-' + id).value || '\u2014';
-    var dno     = document.getElementById('dno-'    + id).value || '\u2014';
-    var fabric  = document.getElementById('fabric-' + id).value || '\u2014';
-    var date    = document.getElementById('date-'   + id).value || '\u2014';
+    var orderNo = document.getElementById('orderno-' + id).value || '';
+    var dno     = document.getElementById('dno-'    + id).value || '';
+    var fabric  = document.getElementById('fabric-' + id).value || '';
+    var date    = document.getElementById('date-'   + id).value || '';
 
     // Image
     var imgEl  = block.querySelector('img.preview-img');
@@ -108,8 +108,8 @@ function printAs(mode) {
     if (mode === 'embroidery') {
       var embPartyEl = document.getElementById('emb-party-' + id);
       var embDateEl  = document.getElementById('emb-date-' + id);
-      var embParty = embPartyEl ? embPartyEl.value : '\u2014';
-      var embDate  = embDateEl ? embDateEl.value : '\u2014';
+      var embParty = embPartyEl ? embPartyEl.value : '';
+      var embDate  = embDateEl ? embDateEl.value : '';
       sectionInfoHtml =
         '<table style="width:100%;border-collapse:collapse;margin-bottom:12px;border:2px solid #333;">' +
           '<tr>' +
@@ -122,8 +122,8 @@ function printAs(mode) {
     } else if (mode === 'stitch') {
       var stPartyEl = document.getElementById('stitch-party-' + id);
       var stDateEl  = document.getElementById('stitch-date-' + id);
-      var stParty = stPartyEl ? stPartyEl.value : '\u2014';
-      var stDate  = stDateEl ? stDateEl.value : '\u2014';
+      var stParty = stPartyEl ? stPartyEl.value : '';
+      var stDate  = stDateEl ? stDateEl.value : '';
       sectionInfoHtml =
         '<table style="width:100%;border-collapse:collapse;margin-bottom:12px;border:2px solid #333;">' +
           '<tr>' +
@@ -158,7 +158,7 @@ function printAs(mode) {
           tableHtml += '<tr style="background:' + bgColor + ';">';
           tableHtml += '<td style="' + tdStyle + 'font-weight:700;">' + (idx + 1) + '</td>';
           for (var i = 0; i < cfg.fields.length; i++) {
-            var val = (inputs[i] ? inputs[i].value : '') || '\u2014';
+            var val = (inputs[i] ? inputs[i].value : '') || '';
             tableHtml += '<td style="' + tdStyle + '">' + escHtml(val) + '</td>';
           }
           tableHtml += '</tr>';

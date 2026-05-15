@@ -543,7 +543,7 @@ async function submitForm() {
       await updateOrder(currentEditId, updateData);
       showToast('&#x2714; Record updated! Redirecting...', '#e65100');
       if (loader) loader.style.display = 'none';
-      setTimeout(function () { window.location.href = 'records.html'; }, 1500);
+      setTimeout(function () { window.location.href = 'allrecords.html'; }, 1500);
 
     } else {
       // ── SAVE new records ──
@@ -575,7 +575,7 @@ async function submitForm() {
 
       showToast('&#x2714; Order saved! Redirecting...');
       if (loader) loader.style.display = 'none';
-      setTimeout(function () { window.location.href = 'records.html'; }, 1500);
+      setTimeout(function () { window.location.href = 'allrecords.html'; }, 1500);
     }
   } catch (err) {
     alert('Error saving order: ' + err.message);
