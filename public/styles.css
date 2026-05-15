@@ -4,10 +4,17 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  font-family: 'Segoe UI', Arial, sans-serif;
-  background: #f0f2f5;
-  color: #222;
-  padding: 24px;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background: #f4f7fa;
+  color: #333;
+  padding: 16px;
+  line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+  body {
+    padding: 10px;
+  }
 }
 
 /* ═══════════════════════════════════════════
@@ -49,10 +56,16 @@ body {
 h1 {
   text-align: center;
   font-size: 1.5rem;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
   text-transform: uppercase;
   color: #1a237e;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 600px) {
+  h1 {
+    font-size: 1.25rem;
+  }
 }
 
 /* ═══════════════════════════════════════════
@@ -122,6 +135,14 @@ h1 {
   max-width: 900px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.18);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 600px) {
+  .modal {
+    max-height: 95vh;
+  }
 }
 
 .modal-header {
@@ -154,11 +175,13 @@ h1 {
 }
 
 .record-card-header {
-  background: #e8eaf6;
-  padding: 10px 16px;
-  display: flex; align-items: center;
+  background: #f8f9ff;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 .record-card-header .meta { font-size: 0.82rem; color: #555; }
 .record-card-header strong { font-size: 1rem; color: #1a237e; }
@@ -231,12 +254,20 @@ h1 {
 
 .design-top {
   display: flex;
-  gap: 24px;
+  gap: 20px;
   align-items: flex-start;
   margin-bottom: 20px;
   padding-bottom: 16px;
-  border-bottom: 2px solid #e8eaf6;
+  border-bottom: 2px solid #f0f2f8;
   flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+  .design-top {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
 }
 
 /* ── Image upload ── */
@@ -302,9 +333,18 @@ h1 {
   text-transform: uppercase; letter-spacing: 0.8px; color: #5c6bc0;
 }
 .design-fields input {
-  padding: 7px 10px;
-  border: 1px solid #c5cae9; border-radius: 6px;
-  font-size: 0.95rem; width: 160px; background: #f8f9ff;
+  padding: 8px 12px;
+  border: 1px solid #c5cae9;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  width: 100%;
+  background: #f8f9ff;
+}
+
+@media (min-width: 600px) {
+  .design-fields input {
+    width: 160px;
+  }
 }
 .design-fields input:focus { outline: none; border-color: #5c6bc0; background: #fff; }
 
@@ -409,12 +449,22 @@ tbody td.stitch-cell input[type="text"]:focus { border-color: #00796b; }
 .btn-add-design:hover { background: #283593; }
 
 .btn-submit {
-  display: block; margin: 0 auto;
-  background: #2e7d32; color: #fff;
-  padding: 12px 40px; font-size: 1rem;
-  border-radius: 8px; border: none; cursor: pointer;
+  display: block;
+  margin: 20px auto;
+  background: #2e7d32;
+  color: #fff;
+  padding: 14px 40px;
+  font-size: 1.1rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  max-width: 400px;
 }
-.btn-submit:hover { background: #1b5e20; }
+
+.btn-submit:hover {
+  background: #1b5e20;
+}
 
 .btn-cancel-edit {
   display: none;
