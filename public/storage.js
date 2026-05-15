@@ -43,13 +43,24 @@ async function loadOrdersPaged(options) {
   var offset = options.offset || 0;
   var onlyBasic = options.onlyBasic !== false;
   var query = options.query || '';
-  
-  var select = onlyBasic 
+
+  var select = onlyBasic
     ? 'id,order_no,d_no,fabric,date,image,saved_at'
-    : '*,fabric_rows(*),emb_rows(*),stitch_rows(*)';
-    
+    : `
+      id,
+      order_no,
+      d_no,
+      fabric,
+      date,
+      image,
+      saved_at,
+      fabric_rows(id,name,value),
+      emb_rows(id,name,value),
+      stitch_rows(id,name,value)
+    `;
+
   var path = 'orders?select=' + select + '&order=saved_at.desc&limit=' + limit + '&offset=' + offset;
-  
+
   if (query) {
     path += '&d_no=ilike.*' + encodeURIComponent(query) + '*';
   }
@@ -70,13 +81,13 @@ var CACHE_KEY = 'sb_orders_cache_v1';
 function clearOrdersCache() {
   _cachedOrders = null;
   _cachedOrdersPromise = null;
-  try { localStorage.removeItem(CACHE_KEY); } catch (e) {}
+  try { localStorage.removeItem(CACHE_KEY); } catch (e) { }
 }
 
 async function loadAllOrders(options) {
   var forceRefresh = options && options.forceRefresh;
   var select = (options && options.select) || '*,fabric_rows(*),emb_rows(*),stitch_rows(*)';
-  
+
   // If we already have cached orders in memory (and it has the required columns), return them
   // For simplicity, we only cache the "full" fetch in memory
   if (!forceRefresh && _cachedOrders && select.indexOf('*') !== -1) return _cachedOrders;
@@ -87,10 +98,10 @@ async function loadAllOrders(options) {
       const localData = localStorage.getItem(CACHE_KEY);
       if (localData) {
         _cachedOrders = JSON.parse(localData);
-        fetchAndCacheOrders(); 
+        fetchAndCacheOrders();
         return _cachedOrders;
       }
-    } catch (e) {}
+    } catch (e) { }
   }
 
   return fetchAndCacheOrders(select);
@@ -99,7 +110,7 @@ async function loadAllOrders(options) {
 async function fetchAndCacheOrders(select) {
   select = select || '*,fabric_rows(*),emb_rows(*),stitch_rows(*)';
   var isFull = select.indexOf('*') !== -1;
-  
+
   if (isFull && _cachedOrdersPromise) return _cachedOrdersPromise;
 
   var promise = (async function () {
@@ -108,16 +119,16 @@ async function fetchAndCacheOrders(select) {
       if (!res.ok) throw new Error('Failed to load orders');
       var data = await res.json();
       var mapped = (data || []).map(mapOrder);
-      
+
       if (isFull) {
         _cachedOrders = mapped;
-        try { localStorage.setItem(CACHE_KEY, JSON.stringify(mapped)); } catch (e) {}
+        try { localStorage.setItem(CACHE_KEY, JSON.stringify(mapped)); } catch (e) { }
       }
-      
+
       return mapped;
     } catch (e) {
       console.error('loadAllOrders error:', e);
-      return isFull ? (_cachedOrders || []) : []; 
+      return isFull ? (_cachedOrders || []) : [];
     } finally {
       if (isFull) _cachedOrdersPromise = null;
     }
@@ -207,10 +218,114 @@ function mapStitchRow(r) {
 
 
 /* ─────────────────────────────────────────
+   UPLOAD IMAGE TO SUPABASE STORAGE
+───────────────────────────────────────── */
+async function uploadImage(base64Data, fileName) {
+  if (!base64Data || !base64Data.startsWith('data:image')) return base64Data;
+
+  try {
+    // 1. Convert base64 to Blob
+    var base64Parts = base64Data.split(',');
+    var contentType = base64Parts[0].match(/:(.*?);/)[1];
+    var byteCharacters = atob(base64Parts[1]);
+    var byteNumbers = new Array(byteCharacters.length);
+    for (var i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    var byteArray = new Uint8Array(byteNumbers);
+    var blob = new Blob([byteArray], { type: contentType });
+
+    // 2. Define path (e.g., "orders/timestamp-filename.png")
+    var cleanFileName = (fileName || 'image').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
+    var path = 'orders/' + Date.now() + '-' + cleanFileName;
+    var url = SUPABASE_URL + '/storage/v1/object/order-images/' + path;
+
+    // 3. Upload to Supabase Storage
+    var res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+        'Content-Type': contentType,
+        'x-upsert': 'true'
+      },
+      body: blob
+    });
+
+    if (!res.ok) {
+      var err = await res.json();
+      throw new Error(err.message || 'Upload failed');
+    }
+
+    // 4. Return the Public URL
+    return SUPABASE_URL + '/storage/v1/object/public/order-images/' + path;
+  } catch (e) {
+    console.error('uploadImage error:', e);
+    return base64Data; // Fallback to base64 if upload fails
+  }
+}
+
+/**
+ * ONE-TIME MIGRATION: 
+ * Moves all existing base64 images from the database to Supabase Storage.
+ * Run this from the browser console: await migrateImagesToStorage()
+ */
+async function migrateImagesToStorage() {
+  console.log('Starting migration...');
+  var loader = document.getElementById('page-loader');
+  if (loader) loader.style.display = 'flex';
+
+  try {
+    // 1. Fetch all orders with images
+    var allOrders = await loadAllOrders({ forceRefresh: true });
+    var base64Orders = allOrders.filter(function(o) {
+      return o.image && o.image.startsWith('data:image');
+    });
+
+    console.log('Found ' + base64Orders.length + ' orders with base64 images.');
+
+    for (var i = 0; i < base64Orders.length; i++) {
+      var order = base64Orders[i];
+      console.log('Migrating order ' + (i + 1) + '/' + base64Orders.length + ' (ID: ' + order.id + ')...');
+
+      // 2. Upload image
+      var newUrl = await uploadImage(order.image, (order.dNo || 'order') + '.png');
+
+      if (newUrl && newUrl.startsWith('http')) {
+        // 3. Update database record
+        var res = await sbFetch('orders?id=eq.' + order.id, {
+          method: 'PATCH',
+          body: { image: newUrl }
+        });
+
+        if (!res.ok) console.error('Failed to update record for ID: ' + order.id);
+        else console.log('Successfully migrated ID: ' + order.id);
+      }
+    }
+
+    console.log('Migration complete!');
+    alert('Migration complete! ' + base64Orders.length + ' images moved to storage.');
+    clearOrdersCache();
+    location.reload();
+  } catch (err) {
+    console.error('Migration failed:', err);
+    alert('Migration failed: ' + err.message);
+  } finally {
+    if (loader) loader.style.display = 'none';
+  }
+}
+
+/* ─────────────────────────────────────────
    SAVE NEW ORDER
 ───────────────────────────────────────── */
 async function saveOrder(orderData) {
   clearOrdersCache();
+
+  // Upload image to Supabase Storage if it's base64
+  if (orderData.image && orderData.image.startsWith('data:image')) {
+    orderData.image = await uploadImage(orderData.image, (orderData.dNo || 'order') + '.png');
+  }
+
   // Insert order
   var res = await sbFetch('orders', {
     method: 'POST',
@@ -290,6 +405,12 @@ async function saveOrder(orderData) {
 ───────────────────────────────────────── */
 async function updateOrder(id, orderData) {
   clearOrdersCache();
+
+  // Upload image to Supabase Storage if it's base64
+  if (orderData.image && orderData.image.startsWith('data:image')) {
+    orderData.image = await uploadImage(orderData.image, (orderData.dNo || 'order') + '.png');
+  }
+
   // Update order
   var res = await sbFetch('orders?id=eq.' + id, {
     method: 'PATCH',
@@ -549,29 +670,47 @@ async function searchDesign() {
   var query = document.getElementById('search-input').value.trim().toLowerCase();
   if (!query) { alert('Please enter a Design Number to search.'); return; }
 
-  var allOrders = await loadAllOrders();
-  var results = allOrders.filter(function (o) {
-    return o.dNo && o.dNo.toLowerCase().indexOf(query) !== -1;
-  });
+  var loader = document.getElementById('page-loader');
+  if (loader) loader.style.display = 'flex';
 
-  document.getElementById('modal-title').textContent = results.length
-    ? 'Results for "' + query + '" (' + results.length + ')'
-    : 'No results for "' + query + '"';
+  try {
+    var allOrders = await loadAllOrders();
+    var results = allOrders.filter(function (o) {
+      return o.dNo && o.dNo.toLowerCase().indexOf(query) !== -1;
+    });
 
-  renderRecordCards(results);
-  document.getElementById('search-modal').classList.add('open');
+    document.getElementById('modal-title').textContent = results.length
+      ? 'Results for "' + query + '" (' + results.length + ')'
+      : 'No results for "' + query + '"';
+
+    renderRecordCards(results);
+    document.getElementById('search-modal').classList.add('open');
+  } catch (err) {
+    console.error('Search error:', err);
+  } finally {
+    if (loader) loader.style.display = 'none';
+  }
 }
 
 /* ─────────────────────────────────────────
    SHOW ALL DESIGNS
 ───────────────────────────────────────── */
 async function showAllDesigns() {
-  var all = await loadAllOrders();
-  document.getElementById('modal-title').textContent = all.length
-    ? 'All Saved Designs (' + all.length + ')'
-    : 'No Saved Designs Yet';
-  renderRecordCards(all);
-  document.getElementById('search-modal').classList.add('open');
+  var loader = document.getElementById('page-loader');
+  if (loader) loader.style.display = 'flex';
+
+  try {
+    var all = await loadAllOrders();
+    document.getElementById('modal-title').textContent = all.length
+      ? 'All Saved Designs (' + all.length + ')'
+      : 'No Saved Designs Yet';
+    renderRecordCards(all);
+    document.getElementById('search-modal').classList.add('open');
+  } catch (err) {
+    console.error('Show all error:', err);
+  } finally {
+    if (loader) loader.style.display = 'none';
+  }
 }
 
 /* ─────────────────────────────────────────
@@ -581,30 +720,39 @@ async function searchByParty() {
   var query = document.getElementById('party-search-input').value.trim().toLowerCase();
   if (!query) { alert('Please enter a Party Name to search.'); return; }
 
-  var allOrders = await loadAllOrders();
-  var results = [];
+  var loader = document.getElementById('page-loader');
+  if (loader) loader.style.display = 'flex';
 
-  allOrders.forEach(function (order) {
-    var matchedFabric = (order.fabricRows || []).filter(function (r) {
-      return r.partyName && r.partyName.toLowerCase().indexOf(query) !== -1;
-    });
-    var matchedEmb = (order.embRows || []).filter(function (r) {
-      return r.partyName && r.partyName.toLowerCase().indexOf(query) !== -1;
-    });
-    var matchedStitch = (order.stitchRows || []).filter(function (r) {
-      return r.partyName && r.partyName.toLowerCase().indexOf(query) !== -1;
-    });
-    if (matchedFabric.length || matchedEmb.length || matchedStitch.length) {
-      results.push({ order: order, embRows: matchedEmb, stitchRows: matchedStitch });
-    }
-  });
+  try {
+    var allOrders = await loadAllOrders();
+    var results = [];
 
-  document.getElementById('modal-title').textContent = results.length
-    ? 'Party: "' + query + '" (' + results.length + ')'
-    : 'No results for party "' + query + '"';
+    allOrders.forEach(function (order) {
+      var matchedFabric = (order.fabricRows || []).filter(function (r) {
+        return r.partyName && r.partyName.toLowerCase().indexOf(query) !== -1;
+      });
+      var matchedEmb = (order.embRows || []).filter(function (r) {
+        return r.partyName && r.partyName.toLowerCase().indexOf(query) !== -1;
+      });
+      var matchedStitch = (order.stitchRows || []).filter(function (r) {
+        return r.partyName && r.partyName.toLowerCase().indexOf(query) !== -1;
+      });
+      if (matchedFabric.length || matchedEmb.length || matchedStitch.length) {
+        results.push({ order: order, embRows: matchedEmb, stitchRows: matchedStitch });
+      }
+    });
 
-  renderPartyCards(results);
-  document.getElementById('search-modal').classList.add('open');
+    document.getElementById('modal-title').textContent = results.length
+      ? 'Party: "' + query + '" (' + results.length + ')'
+      : 'No results for party "' + query + '"';
+
+    renderPartyCards(results);
+    document.getElementById('search-modal').classList.add('open');
+  } catch (err) {
+    console.error('Party search error:', err);
+  } finally {
+    if (loader) loader.style.display = 'none';
+  }
 }
 
 /* ─────────────────────────────────────────

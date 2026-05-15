@@ -347,68 +347,77 @@ populateDropdowns().then(function() {
    FILTER LOGIC — auto-apply on change
 ───────────────────────────────────────── */
 async function applyFilters() {
-  var orderNo = (dropdowns['sd-orderno'] ? dropdowns['sd-orderno'].selected : '').toLowerCase();
-  var party   = (dropdowns['sd-party']   ? dropdowns['sd-party'].selected   : '').toLowerCase();
-  var dno     = (dropdowns['sd-dno']     ? dropdowns['sd-dno'].selected     : '').toLowerCase();
+  var loader = document.getElementById('page-loader');
+  if (loader) loader.style.display = 'flex';
 
-  var hasFilter = (orderNo || party || dno);
+  try {
+    var orderNo = (dropdowns['sd-orderno'] ? dropdowns['sd-orderno'].selected : '').toLowerCase();
+    var party   = (dropdowns['sd-party']   ? dropdowns['sd-party'].selected   : '').toLowerCase();
+    var dno     = (dropdowns['sd-dno']     ? dropdowns['sd-dno'].selected     : '').toLowerCase();
 
-  // Show/hide header and filter-active bar
-  document.getElementById('header-row').style.display = hasFilter ? 'none' : 'flex';
-  document.getElementById('filter-active-bar').style.display = hasFilter ? 'block' : 'none';
+    var hasFilter = (orderNo || party || dno);
 
-  // If no filter selected, show empty message
-  if (!hasFilter) {
-    document.getElementById('results-section').innerHTML = '<div class="no-results">Select a filter above to search records, or <a href="allrecords.html" style="color:#3949ab;font-weight:600;">view all records</a>.</div>';
-    return;
-  }
+    // Show/hide header and filter-active bar
+    document.getElementById('header-row').style.display = hasFilter ? 'none' : 'flex';
+    document.getElementById('filter-active-bar').style.display = hasFilter ? 'block' : 'none';
 
-  // Fetch only basic info + necessary child rows for filtering
-  var allOrders = await loadAllOrders({
-    select: 'id,order_no,d_no,fabric,date,image,saved_at,fabric_rows(party_name),emb_rows(party_name),stitch_rows(party_name)'
-  });
-  // Determine if this is a party-only search (no orderNo, no dno)
-  var isPartySearch = (party && !orderNo && !dno);
-
-  var results = [];
-
-  allOrders.forEach(function(order) {
-    // Filter by Order No
-    if (orderNo) {
-      var oNum = String(order.orderNo || '').toLowerCase();
-      if (oNum.indexOf(orderNo) === -1) return;
+    // If no filter selected, show empty message
+    if (!hasFilter) {
+      document.getElementById('results-section').innerHTML = '<div class="no-results">Select a filter above to search records, or <a href="allrecords.html" style="color:#3949ab;font-weight:600;">view all records</a>.</div>';
+      return;
     }
-    // Filter by Design No
-    if (dno) {
-      if ((order.dNo || '').toLowerCase().indexOf(dno) === -1) return;
-    }
-    // Filter by Party Name (in fabric, embroidery or stitching rows)
-    if (party) {
-      var matchedFabric = (order.fabricRows || []).filter(function(r) {
-        return r.partyName && r.partyName.toLowerCase().indexOf(party) !== -1;
-      });
-      var matchedEmb = (order.embRows || []).filter(function(r) {
-        return r.partyName && r.partyName.toLowerCase().indexOf(party) !== -1;
-      });
-      var matchedStitch = (order.stitchRows || []).filter(function(r) {
-        return r.partyName && r.partyName.toLowerCase().indexOf(party) !== -1;
-      });
-      if (!matchedFabric.length && !matchedEmb.length && !matchedStitch.length) return;
-      // For party search, only include matched rows
-      if (isPartySearch) {
-        results.push({
-          order: order,
-          fabricRows: matchedFabric,
-          embRows: matchedEmb,
-          stitchRows: matchedStitch
-        });
-        return;
+
+    // Fetch only basic info + necessary child rows for filtering
+    var allOrders = await loadAllOrders({
+      select: 'id,order_no,d_no,fabric,date,image,saved_at,fabric_rows(party_name),emb_rows(party_name),stitch_rows(party_name)'
+    });
+    // Determine if this is a party-only search (no orderNo, no dno)
+    var isPartySearch = (party && !orderNo && !dno);
+
+    var results = [];
+
+    allOrders.forEach(function(order) {
+      // Filter by Order No
+      if (orderNo) {
+        var oNum = String(order.orderNo || '').toLowerCase();
+        if (oNum.indexOf(orderNo) === -1) return;
       }
-    }
-    results.push({ order: order, embRows: null, stitchRows: null });
-  });
+      // Filter by Design No
+      if (dno) {
+        if ((order.dNo || '').toLowerCase().indexOf(dno) === -1) return;
+      }
+      // Filter by Party Name (in fabric, embroidery or stitching rows)
+      if (party) {
+        var matchedFabric = (order.fabricRows || []).filter(function(r) {
+          return r.partyName && r.partyName.toLowerCase().indexOf(party) !== -1;
+        });
+        var matchedEmb = (order.embRows || []).filter(function(r) {
+          return r.partyName && r.partyName.toLowerCase().indexOf(party) !== -1;
+        });
+        var matchedStitch = (order.stitchRows || []).filter(function(r) {
+          return r.partyName && r.partyName.toLowerCase().indexOf(party) !== -1;
+        });
+        if (!matchedFabric.length && !matchedEmb.length && !matchedStitch.length) return;
+        // For party search, only include matched rows
+        if (isPartySearch) {
+          results.push({
+            order: order,
+            fabricRows: matchedFabric,
+            embRows: matchedEmb,
+            stitchRows: matchedStitch
+          });
+          return;
+        }
+      }
+      results.push({ order: order, embRows: null, stitchRows: null });
+    });
 
-  renderFilterResults(results, isPartySearch);
+    renderFilterResults(results, isPartySearch);
+  } catch (err) {
+    console.error('Filter error:', err);
+  } finally {
+    if (loader) loader.style.display = 'none';
+  }
 }
 
 function clearFilters() {
