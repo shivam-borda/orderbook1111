@@ -74,6 +74,14 @@
       var editId = params.get('edit');
       if (editId) {
         editRecord(editId);
+        
+        // Update back link to go to allrecords.html in edit mode
+        var backLink = document.querySelector('a[href="records.html"]');
+        if (backLink) {
+          backLink.href = 'allrecords.html';
+          backLink.innerHTML = '&larr; All Records';
+        }
+
         // Fallback: force hide after 10s in case of error
         setTimeout(function () {
           var loader = document.getElementById('page-loader');
