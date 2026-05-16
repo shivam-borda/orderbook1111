@@ -109,13 +109,18 @@ function printAs(mode) {
       '</div>' +
       '<table style="width:100%;border-collapse:collapse;margin-bottom:16px;border:2px solid #333;">' +
         '<tr>' +
-          '<td rowspan="2" style="' + cellStyle + 'text-align:center;vertical-align:middle;width:140px;">' + imgTag + '</td>' +
-          '<td style="' + keyStyle + '">Fabric Type</td>' +
-          '<td style="' + valStyle + '">' + escHtml(fabric) + '</td>' +
-          (mode === 'fabric' ? '<td style="' + keyStyle + '">Date</td><td style="' + valStyle + '">' + escHtml(date) + '</td>' : '') +
-          (mode !== 'fabric' && party ? '<td style="' + keyStyle + '">Party Name</td><td style="' + valStyle + '">' + escHtml(party) + '</td>' : '') +
+          '<td rowspan="3" style="' + cellStyle + 'text-align:center;vertical-align:middle;width:140px;">' + imgTag + '</td>' +
+          '<td style="' + keyStyle + '">Party Name</td>' +
+          '<td style="' + valStyle + '">' + escHtml(mode === 'fabric' ? 'OUR COPY' : (party || '\u2014')) + '</td>' +
         '</tr>' +
-        (mode !== 'fabric' && pDate ? '<tr><td style="' + keyStyle + '">' + pDateLabel + '</td><td colspan="3" style="' + valStyle + '">' + escHtml(pDate) + '</td></tr>' : (mode === 'fabric' ? '<tr><td colspan="4" style="' + valStyle + ';background:#fafafa;height:20px;"></td></tr>' : '')) +
+        '<tr>' +
+          '<td style="' + keyStyle + '">' + pDateLabel + '</td>' +
+          '<td style="' + valStyle + '">' + escHtml(mode === 'fabric' ? date : (pDate || '\u2014')) + '</td>' +
+        '</tr>' +
+        '<tr>' +
+          '<td style="' + keyStyle + '">Fabric Type</td>' +
+          '<td style="' + valStyle + '">' + escHtml(fabric || '\u2014') + '</td>' +
+        '</tr>' +
       '</table>';
 
     // Build TABLE format for data rows
