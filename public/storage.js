@@ -800,7 +800,11 @@ async function deleteRecord(recordId) {
   try {
     await deleteOrderApi(recordId);
     showToast('&#x2714; Record deleted!', '#d32f2f');
-    setTimeout(function () { location.reload(); }, 1000);
+    if (typeof refreshActiveView === 'function') {
+      await refreshActiveView();
+    } else {
+      setTimeout(function () { location.reload(); }, 1000);
+    }
   } catch (err) {
     alert('Error deleting record: ' + err.message);
   }
@@ -823,3 +827,131 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 });
+
+/* ─────────────────────────────────────────
+   PIPELINE DATA AGGREGATORS FOR SPA
+   ───────────────────────────────────────── */
+
+// Get distinct parties and their stats across all orders
+function getPartiesStats(orders) {
+  var parties = {};
+  orders.forEach(function (order) {
+    var seenInOrder = {};
+    
+    // Helper to log party
+    function logParty(name, type) {
+      if (!name || !name.trim()) return;
+      var key = name.trim();
+      if (!parties[key]) {
+        parties[key] = { name: key, fabricCount: 0, embCount: 0, stitchCount: 0, totalCount: 0 };
+      }
+      if (!seenInOrder[key + '-' + type]) {
+        seenInOrder[key + '-' + type] = true;
+        if (type === 'fabric') parties[key].fabricCount++;
+        if (type === 'emb') parties[key].embCount++;
+        if (type === 'stitch') parties[key].stitchCount++;
+      }
+    }
+    
+    (order.fabricRows || []).forEach(function(r) { logParty(r.partyName, 'fabric'); });
+    (order.embRows || []).forEach(function(r) { logParty(r.partyName, 'emb'); });
+    (order.stitchRows || []).forEach(function(r) { logParty(r.partyName, 'stitch'); });
+  });
+  
+  return Object.keys(parties).map(function (k) {
+    var p = parties[k];
+    p.totalCount = p.fabricCount + p.embCount + p.stitchCount;
+    return p;
+  }).sort(function(a, b) { return b.totalCount - a.totalCount; });
+}
+
+// Get flattened fabric rows with parent order metadata
+function getFabricPipeline(orders) {
+  var rows = [];
+  orders.forEach(function (order) {
+    (order.fabricRows || []).forEach(function (r) {
+      rows.push({
+        orderId: order.id,
+        orderNo: order.orderNo,
+        dNo: order.dNo,
+        date: order.date,
+        partyName: r.partyName,
+        fabricName: r.fabricName,
+        colour: r.colour,
+        workFab: r.workFab,
+        plainFab: r.plainFab,
+        totalFab: r.totalFab,
+        receivedFab: r.receivedFab,
+        workPcs: r.workPcs
+      });
+    });
+  });
+  return rows;
+}
+
+// Get flattened embroidery rows with parent order metadata
+function getEmbroideryPipeline(orders) {
+  var rows = [];
+  orders.forEach(function (order) {
+    (order.embRows || []).forEach(function (r) {
+      var sentFront = parseFloat(r.sentFront) || 0;
+      var sentBack = parseFloat(r.sentBack) || 0;
+      var sentSleeve = parseFloat(r.sentSleeve) || 0;
+      var returnFront = parseFloat(r.returnFront) || 0;
+      var returnBack = parseFloat(r.returnBack) || 0;
+      var returnSleeve = parseFloat(r.returnSleeve) || 0;
+      
+      var totalSent = sentFront + sentBack + sentSleeve;
+      var totalReturned = returnFront + returnBack + returnSleeve;
+      var balance = totalSent - totalReturned;
+      
+      rows.push({
+        orderId: order.id,
+        orderNo: order.orderNo,
+        dNo: order.dNo,
+        date: order.date,
+        partyName: r.partyName,
+        rowDate: r.date,
+        sentFront: r.sentFront,
+        sentBack: r.sentBack,
+        sentSleeve: r.sentSleeve,
+        returnFront: r.returnFront,
+        returnBack: r.returnBack,
+        returnSleeve: r.returnSleeve,
+        totalSent: totalSent,
+        totalReturned: totalReturned,
+        balance: balance,
+        status: balance <= 0 ? 'completed' : 'pending'
+      });
+    });
+  });
+  return rows;
+}
+
+// Get flattened stitching rows with parent order metadata
+function getStitchingPipeline(orders) {
+  var rows = [];
+  orders.forEach(function (order) {
+    (order.stitchRows || []).forEach(function (r) {
+      var expected = parseFloat(r.expectedPcs) || 0;
+      var received = parseFloat(r.receivedPcs) || 0;
+      var balance = expected - received;
+      var pct = expected > 0 ? Math.min(100, Math.round((received / expected) * 100)) : 0;
+      
+      rows.push({
+        orderId: order.id,
+        orderNo: order.orderNo,
+        dNo: order.dNo,
+        date: order.date,
+        partyName: r.partyName,
+        sentDate: r.sentDate,
+        expectedPcs: r.expectedPcs,
+        receivedPcs: r.receivedPcs,
+        balance: balance,
+        pct: pct,
+        status: balance <= 0 ? 'completed' : 'pending'
+      });
+    });
+  });
+  return rows;
+}

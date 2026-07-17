@@ -32,11 +32,11 @@ var _logoDataUrl = '';
 function printAs(mode) {
   var config = {
     fabric: {
-      title: 'OUR COPY \u2013 FABRIC ORDER DETAILS',
+      title: 'FABRIC ORDER DETAILS',
       heading: 'Fabric Order',
       icon: '&#x1F9F5;',
       thColor: '#3949ab',
-      fields: ['Party Name', 'Fabric Name', 'Colour', 'Work Fab', 'Plain Fab', 'Total Fab', 'Received Fab', 'Work Pcs'],
+      fields: ['Fabric Name', 'Colour', 'Work Fab', 'Plain Fab', 'Total Fab', 'Received Fab', 'Work Pcs'],
       tbodyPrefix: 'fabric-tbody-'
     },
     embroidery: {
@@ -70,10 +70,30 @@ function printAs(mode) {
 
   designs.forEach(function(block) {
     var id      = block.id.split('-')[1];
-    var orderNo = document.getElementById('orderno-' + id).value || '\u2014';
-    var dno     = document.getElementById('dno-'    + id).value || '\u2014';
-    var fabric  = document.getElementById('fabric-' + id).value || '\u2014';
-    var date    = document.getElementById('date-'   + id).value || '\u2014';
+    var orderNo = document.getElementById('orderno-' + id).value || '';
+    var dno     = document.getElementById('dno-'    + id).value || '';
+    var fabric  = document.getElementById('fabric-' + id).value || '';
+    var date    = document.getElementById('date-'   + id).value || '';
+
+    // Party and Date info for specific modes
+    var party = '';
+    var pDate = '';
+    var pDateLabel = 'Date';
+    if (mode === 'fabric') {
+      var pEl = document.getElementById('fabric-party-' + id);
+      party = pEl ? pEl.value : '';
+    } else if (mode === 'embroidery') {
+      var pEl = document.getElementById('emb-party-' + id);
+      var dEl = document.getElementById('emb-date-' + id);
+      party = pEl ? pEl.value : '';
+      pDate = dEl ? dEl.value : '';
+    } else if (mode === 'stitch') {
+      var pEl = document.getElementById('stitch-party-' + id);
+      var dEl = document.getElementById('stitch-date-' + id);
+      party = pEl ? pEl.value : '';
+      pDate = dEl ? dEl.value : '';
+      pDateLabel = 'Sent Date';
+    }
 
     // Image
     var imgEl  = block.querySelector('img.preview-img');
@@ -83,7 +103,7 @@ function printAs(mode) {
 
     // Header info with proper borders
     var cellStyle = 'border:1px solid #333;padding:8px 12px;font-size:0.9rem;';
-    var keyStyle  = cellStyle + 'font-weight:700;background:#f0f0f0;width:140px;white-space:nowrap;';
+    var keyStyle  = cellStyle + 'font-weight:700;background:#f0f0f0;width:120px;white-space:nowrap;';
     var valStyle  = cellStyle;
 
     var headerHtml =
@@ -92,10 +112,17 @@ function printAs(mode) {
       '</div>' +
       '<table style="width:100%;border-collapse:collapse;margin-bottom:16px;border:2px solid #333;">' +
         '<tr>' +
-          '<td rowspan="2" style="' + cellStyle + 'text-align:center;vertical-align:middle;">' + imgTag + '</td>' +
+          '<td rowspan="3" style="' + cellStyle + 'text-align:center;vertical-align:middle;width:140px;">' + imgTag + '</td>' +
+          '<td style="' + keyStyle + '">Party Name</td>' +
+          '<td style="' + valStyle + '">' + escHtml(party || '\u2014') + '</td>' +
+        '</tr>' +
+        '<tr>' +
+          '<td style="' + keyStyle + '">' + pDateLabel + '</td>' +
+          '<td style="' + valStyle + '">' + escHtml(mode === 'fabric' ? date : (pDate || '\u2014')) + '</td>' +
+        '</tr>' +
+        '<tr>' +
           '<td style="' + keyStyle + '">Fabric Type</td>' +
-          '<td style="' + valStyle + '">' + escHtml(fabric) + '</td>' +
-          (mode === 'fabric' ? '<td style="' + keyStyle + '">Date</td><td style="' + valStyle + '">' + escHtml(date) + '</td>' : '') +
+          '<td style="' + valStyle + '">' + escHtml(fabric || '\u2014') + '</td>' +
         '</tr>' +
       '</table>';
 
@@ -105,35 +132,6 @@ function printAs(mode) {
 
     // For embroidery/stitch: show party name and date above the table
     var sectionInfoHtml = '';
-    if (mode === 'embroidery') {
-      var embPartyEl = document.getElementById('emb-party-' + id);
-      var embDateEl  = document.getElementById('emb-date-' + id);
-      var embParty = embPartyEl ? embPartyEl.value : '\u2014';
-      var embDate  = embDateEl ? embDateEl.value : '\u2014';
-      sectionInfoHtml =
-        '<table style="width:100%;border-collapse:collapse;margin-bottom:12px;border:2px solid #333;">' +
-          '<tr>' +
-            '<td style="' + keyStyle + '">Party Name</td>' +
-            '<td style="' + valStyle + '">' + escHtml(embParty) + '</td>' +
-            '<td style="' + keyStyle + '">Date</td>' +
-            '<td style="' + valStyle + '">' + escHtml(embDate) + '</td>' +
-          '</tr>' +
-        '</table>';
-    } else if (mode === 'stitch') {
-      var stPartyEl = document.getElementById('stitch-party-' + id);
-      var stDateEl  = document.getElementById('stitch-date-' + id);
-      var stParty = stPartyEl ? stPartyEl.value : '\u2014';
-      var stDate  = stDateEl ? stDateEl.value : '\u2014';
-      sectionInfoHtml =
-        '<table style="width:100%;border-collapse:collapse;margin-bottom:12px;border:2px solid #333;">' +
-          '<tr>' +
-            '<td style="' + keyStyle + '">Party Name</td>' +
-            '<td style="' + valStyle + '">' + escHtml(stParty) + '</td>' +
-            '<td style="' + keyStyle + '">Sent Date</td>' +
-            '<td style="' + valStyle + '">' + escHtml(stDate) + '</td>' +
-          '</tr>' +
-        '</table>';
-    }
 
     if (tbody) {
       var rows = tbody.querySelectorAll('tr');
@@ -158,7 +156,7 @@ function printAs(mode) {
           tableHtml += '<tr style="background:' + bgColor + ';">';
           tableHtml += '<td style="' + tdStyle + 'font-weight:700;">' + (idx + 1) + '</td>';
           for (var i = 0; i < cfg.fields.length; i++) {
-            var val = (inputs[i] ? inputs[i].value : '') || '\u2014';
+            var val = (inputs[i] ? inputs[i].value : '') || '';
             tableHtml += '<td style="' + tdStyle + '">' + escHtml(val) + '</td>';
           }
           tableHtml += '</tr>';

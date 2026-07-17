@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>New Order Form – Garment Unit</title>
+  <title>Aahman Ethnic – Order & Pipeline Dashboard</title>
   <link rel="stylesheet" href="styles.css" />
   <script>
     if (sessionStorage.getItem('loggedIn') !== 'true') {
@@ -15,72 +15,309 @@
 
 <body>
 
+  <!-- Full-Page Loader -->
   <div class="page-loader" id="page-loader">
     <div class="loader-spinner"></div>
-    <div class="loader-text">Loading...</div>
+    <div class="loader-text">Loading Dashboard...</div>
   </div>
 
-  <div
-    style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
-    <a href="records.html" class="back-link" style="flex:1;">&larr; Back to Filter</a>
-    <h1 id="page-title" style="margin-bottom:0;text-align:center;flex:2;">&#x1F9F5; New Order Form</h1>
-    <div style="flex:1;"></div>
-  </div>
-
-  <!-- Search / List modal (kept for edit functionality) -->
-  <div class="modal-overlay" id="search-modal">
-    <div class="modal">
-      <div class="modal-header">
-        <h2 id="modal-title">Search Results</h2>
-        <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+  <div class="app-container">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <img src="logo.png" alt="Aahman Logo" />
+        <span class="brand-text">Aahman Ethnic</span>
       </div>
-      <div class="modal-body" id="modal-body"></div>
-    </div>
+      
+      <nav class="sidebar-nav">
+        <button class="nav-item active" id="nav-dashboard" onclick="switchTab('dashboard')">
+          <span class="nav-icon">&#x1F4CA;</span>
+          <span class="nav-label">Dashboard</span>
+        </button>
+        <button class="nav-item" id="nav-new-order" onclick="switchTab('new-order')">
+          <span class="nav-icon">&#x2795;</span>
+          <span class="nav-label">Order Form</span>
+        </button>
+        <button class="nav-item" id="nav-all-parties" onclick="switchTab('all-parties')">
+          <span class="nav-icon">&#x1F465;</span>
+          <span class="nav-label">All Parties</span>
+        </button>
+        <button class="nav-item" id="nav-fabric-orders" onclick="switchTab('fabric-orders')">
+          <span class="nav-icon">&#x1F9F5;</span>
+          <span class="nav-label">Fabric Orders</span>
+        </button>
+        <button class="nav-item" id="nav-embroidery" onclick="switchTab('embroidery')">
+          <span class="nav-icon">&#x1FAE7;</span>
+          <span class="nav-label">Embroidery</span>
+        </button>
+        <button class="nav-item" id="nav-stitching" onclick="switchTab('stitching')">
+          <span class="nav-icon">&#x2702;&#xFE0F;</span>
+          <span class="nav-label">Stitching</span>
+        </button>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <button class="logout-btn" onclick="logout()">
+          <span class="nav-icon">&#x1F6AA;</span>
+          <span class="nav-label">Logout</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Mobile Header -->
+    <header class="mobile-header">
+      <button class="menu-toggle" onclick="toggleSidebar()">&#x2630;</button>
+      <span class="mobile-brand">Aahman Ethnic</span>
+      <div style="width: 24px;"></div> <!-- Spacer -->
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      
+      <!-- Toast Notification Container -->
+      <div id="toast"></div>
+
+      <!-- VIEW: DASHBOARD -->
+      <section id="tab-dashboard" class="tab-content active">
+        <div class="page-header">
+          <h1 class="page-title">Dashboard Overview</h1>
+        </div>
+        
+        <!-- Summary Stats Grid -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">&#x1F4CB;</div>
+            <div class="stat-info">
+              <span class="stat-label">Total Orders</span>
+              <span class="stat-value" id="stats-total-orders">0</span>
+            </div>
+          </div>
+          <div class="stat-card embroidery">
+            <div class="stat-icon">&#x1FAE7;</div>
+            <div class="stat-info">
+              <span class="stat-label">Embroidery Jobs</span>
+              <span class="stat-value" id="stats-embroidery-jobs">0</span>
+            </div>
+          </div>
+          <div class="stat-card stitching">
+            <div class="stat-icon">&#x2702;&#xFE0F;</div>
+            <div class="stat-info">
+              <span class="stat-label">Stitching Jobs</span>
+              <span class="stat-value" id="stats-stitching-jobs">0</span>
+            </div>
+          </div>
+          <div class="stat-card warning">
+            <div class="stat-icon">&#x1F465;</div>
+            <div class="stat-info">
+              <span class="stat-label">Active Parties</span>
+              <span class="stat-value" id="stats-active-parties">0</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Filters Panel -->
+        <div class="filters-panel">
+          <div class="filters-grid">
+            <div class="field-group">
+              <label>Order No.</label>
+              <div class="search-dropdown" id="sd-orderno">
+                <input type="text" class="sd-input" placeholder="Search / select order..." autocomplete="off" />
+                <div class="sd-list"></div>
+              </div>
+            </div>
+            <div class="field-group">
+              <label>Party Name</label>
+              <div class="search-dropdown" id="sd-party">
+                <input type="text" class="sd-input" placeholder="Search / select party..." autocomplete="off" />
+                <div class="sd-list"></div>
+              </div>
+            </div>
+            <div class="field-group">
+              <label>Design No.</label>
+              <div class="search-dropdown" id="sd-dno">
+                <input type="text" class="sd-input" placeholder="Search / select design..." autocomplete="off" />
+                <div class="sd-list"></div>
+              </div>
+            </div>
+            <div>
+              <button class="btn btn-outline" onclick="clearFilters()" style="width: 100%; height: 42px;">
+                &#x2715; Reset Filters
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Master-Detail Split Layout -->
+        <div class="split-layout">
+          
+          <!-- Master List (Left Pane) -->
+          <div class="master-list-pane">
+            <div class="master-list-header">
+              <span id="orders-results-title">Orders (0)</span>
+              <button class="btn btn-primary btn-sm" onclick="switchTab('new-order')" style="padding: 4px 8px; font-size: 0.72rem;">
+                &#x2795; Add
+              </button>
+            </div>
+            <div class="master-list-scroll" id="master-list-container">
+              <!-- Compact rows rendered here -->
+            </div>
+          </div>
+          
+          <!-- Detail View Panel (Right Pane) -->
+          <div class="detail-view-pane" id="detail-view-container">
+            <!-- Full details of selected order rendered here -->
+          </div>
+          
+        </div>
+      </section>
+
+      <!-- VIEW: NEW/EDIT ORDER FORM -->
+      <section id="tab-new-order" class="tab-content">
+        <div class="page-header">
+          <h1 class="page-title" id="form-tab-title">Order Form</h1>
+          <button class="btn btn-outline btn-sm" id="btn-cancel-edit" onclick="cancelEdit()" style="display: none;">
+            &#x2715; Cancel Edit
+          </button>
+        </div>
+
+        <div id="edit-mode-banner">
+          &#x270E; Edit Mode &mdash; You are editing an existing record. Make your changes and click <strong>Update Record</strong>.
+        </div>
+
+        <!-- Design blocks go here -->
+        <div id="designs-container"></div>
+
+        <div style="display: flex; justify-content: center; gap: 15px; margin: 30px 0;">
+          <button class="btn btn-success" id="submit-btn" onclick="submitForm()" style="flex: 1; max-width: 400px; height: 50px;">
+            &#x2714; Submit Order
+          </button>
+        </div>
+
+        <!-- Print slips for individual order mode -->
+        <div class="table-card" id="form-print-section" style="display: none; padding: 20px;">
+          <div class="table-title" style="margin-bottom: 12px; text-align: center;">Generate Print Sheets</div>
+          <div class="print-btns">
+            <button class="btn btn-primary" onclick="printAs('fabric')">&#x1F5A8; Print &ndash; Fabric Order</button>
+            <button class="btn btn-secondary" onclick="printAs('embroidery')">&#x1FAE7; Print &ndash; Embroidery</button>
+            <button class="btn btn-teal" onclick="printAs('stitch')">&#x2702;&#xFE0F; Print &ndash; Stitching Party</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW: ALL PARTIES -->
+      <section id="tab-all-parties" class="tab-content">
+        <div class="page-header">
+          <h1 class="page-title">Parties Directory</h1>
+        </div>
+        <div class="split-layout">
+          <!-- Left Pane: Parties List -->
+          <div class="master-list-pane">
+            <div class="master-list-header">
+              <span>Parties list</span>
+            </div>
+            <div class="master-list-scroll" id="parties-master-list">
+              <!-- Dynamic compact party rows -->
+            </div>
+          </div>
+          
+          <!-- Right Pane: Selected Party's Orders List -->
+          <div class="detail-view-pane" id="party-detail-container">
+            <!-- Full orders for selected party -->
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW: FABRIC REGISTRY -->
+      <section id="tab-fabric-orders" class="tab-content">
+        <div class="page-header">
+          <h1 class="page-title">Fabric Allocations</h1>
+        </div>
+        <div class="split-layout">
+          <!-- Left Pane: Fabric Allocation Rows -->
+          <div class="master-list-pane">
+            <div class="master-list-header" style="flex-wrap: wrap; gap: 8px;">
+              <input type="text" id="search-fabric" placeholder="Search fabric..." style="flex:1; min-width: 100px; padding: 6px 10px; font-size: 0.8rem;" oninput="filterFabricTable()" />
+              <button class="btn btn-primary btn-sm" onclick="printPipeline('fabric')" style="font-size: 0.72rem; padding: 4px 8px;">
+                &#x1F5A8; Print
+              </button>
+            </div>
+            <div class="master-list-scroll" id="fabric-master-list">
+              <!-- Compact fabric allocation list rows -->
+            </div>
+          </div>
+          
+          <!-- Right Pane: Parent Order Preview -->
+          <div class="detail-view-pane" id="fabric-detail-container">
+            <!-- Full details of select parent order -->
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW: EMBROIDERY PIPELINE -->
+      <section id="tab-embroidery" class="tab-content">
+        <div class="page-header">
+          <h1 class="page-title">Embroidery Pipeline</h1>
+        </div>
+        <div class="split-layout">
+          <!-- Left Pane: Embroidery Pipeline Rows -->
+          <div class="master-list-pane">
+            <div class="master-list-header" style="flex-wrap: wrap; gap: 8px;">
+              <input type="text" id="search-embroidery" placeholder="Search embroidery..." style="flex:1; min-width: 100px; padding: 6px 10px; font-size: 0.8rem;" oninput="filterEmbTable()" />
+              <button class="btn btn-secondary btn-sm" onclick="printPipeline('embroidery')" style="font-size: 0.72rem; padding: 4px 8px;">
+                &#x1FAE7; Print
+              </button>
+            </div>
+            <div class="master-list-scroll" id="embroidery-master-list">
+              <!-- Compact embroidery list rows -->
+            </div>
+          </div>
+          
+          <!-- Right Pane: Parent Order Preview -->
+          <div class="detail-view-pane" id="embroidery-detail-container">
+            <!-- Full details of select parent order -->
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW: STITCHING PIPELINE -->
+      <section id="tab-stitching" class="tab-content">
+        <div class="page-header">
+          <h1 class="page-title">Stitching Job Registry</h1>
+        </div>
+        <div class="split-layout">
+          <!-- Left Pane: Stitching Pipeline Rows -->
+          <div class="master-list-pane">
+            <div class="master-list-header" style="flex-wrap: wrap; gap: 8px;">
+              <input type="text" id="search-stitching" placeholder="Search stitching..." style="flex:1; min-width: 100px; padding: 6px 10px; font-size: 0.8rem;" oninput="filterStitchTable()" />
+              <button class="btn btn-teal btn-sm" onclick="printPipeline('stitching')" style="font-size: 0.72rem; padding: 4px 8px;">
+                &#x2702;&#xFE0F; Print
+              </button>
+            </div>
+            <div class="master-list-scroll" id="stitching-master-list">
+              <!-- Compact stitching list rows -->
+            </div>
+          </div>
+          
+          <!-- Right Pane: Parent Order Preview -->
+          <div class="detail-view-pane" id="stitching-detail-container">
+            <!-- Full details of select parent order -->
+          </div>
+        </div>
+      </section>
+
+    </main>
   </div>
 
-  <!-- Edit mode banner -->
-  <div id="edit-mode-banner">
-    &#x270E; Edit Mode &mdash; You are editing an existing record. Make your changes and click <strong>Update
-      Record</strong>.
-  </div>
+  <!-- Auto-suggest datalists -->
+  <datalist id="fabric-parties-list"></datalist>
+  <datalist id="embroidery-parties-list"></datalist>
+  <datalist id="stitching-parties-list"></datalist>
 
-  <!-- Design blocks go here -->
-  <div id="designs-container"></div>
-
-
-  <button class="btn-submit" id="submit-btn" onclick="submitForm()">&#x2714; Submit Order</button>
-
-  <div class="print-btns">
-    <button class="btn-print-internal" onclick="printAs('fabric')">&#x1F5A8; Print &ndash; Fabric Order</button>
-    <button class="btn-print-emb" onclick="printAs('embroidery')">&#x1FAE7; Print &ndash; Embroidery</button>
-    <button class="btn-print-stitch" onclick="printAs('stitch')">&#x2702;&#xFE0F; Print &ndash; Stitching Party</button>
-  </div>
-
-  <div id="toast"></div>
-
-  <script src="form.js"></script>
+  <!-- Scripts -->
   <script src="storage.js"></script>
+  <script src="form.js"></script>
   <script src="print.js"></script>
-  <script>
-    // Boot
-    addDesign();
 
-    // Check if we need to load a record for editing (from records page)
-    (function () {
-      var params = new URLSearchParams(window.location.search);
-      var editId = params.get('edit');
-      if (editId) {
-        editRecord(editId);
-        // Fallback: force hide after 10s in case of error
-        setTimeout(function () {
-          var loader = document.getElementById('page-loader');
-          if (loader) loader.style.display = 'none';
-        }, 10000);
-      } else {
-        document.getElementById('page-loader').style.display = 'none';
-      }
-    })();
-  </script>
 </body>
-
 </html>

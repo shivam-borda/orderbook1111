@@ -32,11 +32,11 @@ var _logoDataUrl = '';
 function printAs(mode) {
   var config = {
     fabric: {
-      title: 'OUR COPY \u2013 FABRIC ORDER DETAILS',
+      title: 'FABRIC ORDER DETAILS',
       heading: 'Fabric Order',
       icon: '&#x1F9F5;',
       thColor: '#3949ab',
-      fields: ['Party Name', 'Fabric Name', 'Colour', 'Work Fab', 'Plain Fab', 'Total Fab', 'Received Fab', 'Work Pcs'],
+      fields: ['Fabric Name', 'Colour', 'Work Fab', 'Plain Fab', 'Total Fab', 'Received Fab', 'Work Pcs'],
       tbodyPrefix: 'fabric-tbody-'
     },
     embroidery: {
@@ -79,7 +79,10 @@ function printAs(mode) {
     var party = '';
     var pDate = '';
     var pDateLabel = 'Date';
-    if (mode === 'embroidery') {
+    if (mode === 'fabric') {
+      var pEl = document.getElementById('fabric-party-' + id);
+      party = pEl ? pEl.value : '';
+    } else if (mode === 'embroidery') {
       var pEl = document.getElementById('emb-party-' + id);
       var dEl = document.getElementById('emb-date-' + id);
       party = pEl ? pEl.value : '';
@@ -111,7 +114,7 @@ function printAs(mode) {
         '<tr>' +
           '<td rowspan="3" style="' + cellStyle + 'text-align:center;vertical-align:middle;width:140px;">' + imgTag + '</td>' +
           '<td style="' + keyStyle + '">Party Name</td>' +
-          '<td style="' + valStyle + '">' + escHtml(mode === 'fabric' ? 'OUR COPY' : (party || '\u2014')) + '</td>' +
+          '<td style="' + valStyle + '">' + escHtml(party || '\u2014') + '</td>' +
         '</tr>' +
         '<tr>' +
           '<td style="' + keyStyle + '">' + pDateLabel + '</td>' +
