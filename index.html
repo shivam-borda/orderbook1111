@@ -35,10 +35,24 @@
           <span class="nav-icon">&#x1F4CA;</span>
           <span class="nav-label">Dashboard</span>
         </button>
-        <button class="nav-item" id="nav-new-order" onclick="switchTab('new-order')">
-          <span class="nav-icon">&#x2795;</span>
-          <span class="nav-label">Order Form</span>
-        </button>
+
+        <div class="sidebar-dropdown">
+          <button class="nav-item dropdown-toggle" id="nav-orders-parent" onclick="toggleSidebarDropdown()">
+            <span class="nav-icon">&#x1F4E6;</span>
+            <span class="nav-label">Order</span>
+            <span class="dropdown-arrow" style="margin-left: auto; font-size: 0.75rem;">▼</span>
+          </button>
+          <div class="dropdown-submenu" id="orders-submenu">
+            <button class="nav-item" id="nav-new-order" onclick="switchTab('new-order')">
+              <span class="nav-icon">&#x2795;</span>
+              <span class="nav-label">New Order Pipeline</span>
+            </button>
+            <button class="nav-item" id="nav-ready-order" onclick="switchTab('ready-order')">
+              <span class="nav-icon">&#x1F4D8;</span>
+              <span class="nav-label">Ready Order Form</span>
+            </button>
+          </div>
+        </div>
         <button class="nav-item" id="nav-all-parties" onclick="switchTab('all-parties')">
           <span class="nav-icon">&#x1F465;</span>
           <span class="nav-label">All Parties</span>
@@ -202,6 +216,23 @@
             <button class="btn btn-secondary" onclick="printAs('embroidery')">&#x1FAE7; Print &ndash; Embroidery</button>
             <button class="btn btn-teal" onclick="printAs('stitch')">&#x2702;&#xFE0F; Print &ndash; Stitching Party</button>
           </div>
+        </div>
+      </section>
+
+      <!-- VIEW: READY ORDER FORM -->
+      <section id="tab-ready-order" class="tab-content">
+        <div class="page-header">
+          <h1 class="page-title">Ready Order Form</h1>
+        </div>
+
+        <div id="ready-order-container">
+          <!-- Ready order designs rendered here -->
+        </div>
+
+        <div style="display: flex; justify-content: center; gap: 15px; margin: 30px 0;">
+          <button class="btn btn-success" id="ready-submit-btn" onclick="submitReadyOrder()" style="flex: 1; max-width: 400px; height: 50px;">
+            &#x2714; Submit Ready Order
+          </button>
         </div>
       </section>
 

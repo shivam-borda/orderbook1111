@@ -921,6 +921,22 @@ th.stitching-th { background: var(--teal-light); color: var(--teal); }
   border-color: var(--primary);
 }
 
+.form-table-wrap td select {
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  background: #f8f9fa;
+  border: 1px solid #dcdde1;
+  border-radius: 4px;
+  width: 100%;
+  outline: none;
+  cursor: pointer;
+}
+
+.form-table-wrap td select:focus {
+  background: #fff;
+  border-color: var(--primary);
+}
+
 .remove-row-btn {
   background: none;
   border: none;
