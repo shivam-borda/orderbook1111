@@ -65,6 +65,10 @@
           <span class="nav-icon">&#x1FAE7;</span>
           <span class="nav-label">Embroidery</span>
         </button>
+        <button class="nav-item" id="nav-handwork" onclick="switchTab('handwork')">
+          <span class="nav-icon">&#x270B;</span>
+          <span class="nav-label">Hand Work</span>
+        </button>
         <button class="nav-item" id="nav-stitching" onclick="switchTab('stitching')">
           <span class="nav-icon">&#x2702;&#xFE0F;</span>
           <span class="nav-label">Stitching</span>
@@ -311,6 +315,32 @@
         </div>
       </section>
 
+      <!-- VIEW: HAND WORK PIPELINE -->
+      <section id="tab-handwork" class="tab-content">
+        <div class="page-header">
+          <h1 class="page-title">Hand Work Pipeline</h1>
+        </div>
+        <div class="split-layout">
+          <!-- Left Pane: Hand Work Pipeline Rows -->
+          <div class="master-list-pane">
+            <div class="master-list-header" style="flex-wrap: wrap; gap: 8px;">
+              <input type="text" id="search-handwork" placeholder="Search hand work..." style="flex:1; min-width: 100px; padding: 6px 10px; font-size: 0.8rem;" oninput="filterHandworkTable()" />
+              <button class="btn btn-sm" style="background:#fce4ec;color:#c2185b;border:1px solid #f8bbd0;font-size: 0.72rem; padding: 4px 8px;" onclick="printPipeline('handwork')">
+                &#x270B; Print
+              </button>
+            </div>
+            <div class="master-list-scroll" id="handwork-master-list">
+              <!-- Compact handwork list rows -->
+            </div>
+          </div>
+          
+          <!-- Right Pane: Parent Order Preview -->
+          <div class="detail-view-pane" id="handwork-detail-container">
+             <!-- Full details of select parent order -->
+          </div>
+        </div>
+      </section>
+
       <!-- VIEW: STITCHING PIPELINE -->
       <section id="tab-stitching" class="tab-content">
         <div class="page-header">
@@ -343,6 +373,7 @@
   <!-- Auto-suggest datalists -->
   <datalist id="fabric-parties-list"></datalist>
   <datalist id="embroidery-parties-list"></datalist>
+  <datalist id="handwork-parties-list"></datalist>
   <datalist id="stitching-parties-list"></datalist>
 
   <!-- Scripts -->

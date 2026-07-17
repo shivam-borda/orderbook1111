@@ -44,18 +44,26 @@ exports.handler = async (event) => {
     if (event.httpMethod === 'GET' && !id) {
       const q = (event.queryStringParameters && event.queryStringParameters.q) || '';
       
-      let query = supabase
-        .from('orders')
-        .select('*, fabric_rows(*), emb_rows(*), stitch_rows(*)')
-        .order('saved_at', { ascending: false });
-
-      if (q) {
-        query = query.ilike('d_no', `%${q}%`);
+      let query;
+      let hasHandwork = true;
+      try {
+        query = supabase
+          .from('orders')
+          .select('*, fabric_rows(*), emb_rows(*), stitch_rows(*), handwork_rows(*)')
+          .order('saved_at', { ascending: false });
+        if (q) query = query.ilike('d_no', `%${q}%`);
+        var { data, error } = await query;
+        if (error) throw error;
+      } catch (e) {
+        hasHandwork = false;
+        query = supabase
+          .from('orders')
+          .select('*, fabric_rows(*), emb_rows(*), stitch_rows(*)')
+          .order('saved_at', { ascending: false });
+        if (q) query = query.ilike('d_no', `%${q}%`);
+        var { data, error } = await query;
+        if (error) throw error;
       }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
 
       // Map to camelCase for frontend
       const mapped = data.map(o => ({
@@ -76,6 +84,13 @@ exports.handler = async (event) => {
           receivedFab: r.received_fab,
           workPcs: r.work_pcs
         })),
+        handworkRows: hasHandwork && o.handwork_rows ? o.handwork_rows.map(r => ({
+          partyName: r.party_name,
+          sentDate: r.sent_date,
+          colour: r.colour,
+          expectedPcs: r.expected_pcs,
+          receivedPcs: r.received_pcs
+        })) : [],
         embRows: o.emb_rows.map(r => ({
           partyName: r.party_name,
           date: r.date,
@@ -99,11 +114,26 @@ exports.handler = async (event) => {
 
     // GET /api/orders/:id — get one
     if (event.httpMethod === 'GET' && id) {
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*, fabric_rows(*), emb_rows(*), stitch_rows(*)')
-        .eq('id', id)
-        .single();
+      let data, error, hasHandwork = true;
+      try {
+        const res = await supabase
+          .from('orders')
+          .select('*, fabric_rows(*), emb_rows(*), stitch_rows(*), handwork_rows(*)')
+          .eq('id', id)
+          .single();
+        data = res.data;
+        error = res.error;
+        if (error) throw error;
+      } catch (e) {
+        hasHandwork = false;
+        const res = await supabase
+          .from('orders')
+          .select('*, fabric_rows(*), emb_rows(*), stitch_rows(*)')
+          .eq('id', id)
+          .single();
+        data = res.data;
+        error = res.error;
+      }
 
       if (error) return jsonResponse(404, { error: 'Not found' });
 
@@ -125,6 +155,13 @@ exports.handler = async (event) => {
           receivedFab: r.received_fab,
           workPcs: r.work_pcs
         })),
+        handworkRows: hasHandwork && data.handwork_rows ? data.handwork_rows.map(r => ({
+          partyName: r.party_name,
+          sentDate: r.sent_date,
+          colour: r.colour,
+          expectedPcs: r.expected_pcs,
+          receivedPcs: r.received_pcs
+        })) : [],
         embRows: data.emb_rows.map(r => ({
           partyName: r.party_name,
           date: r.date,
@@ -211,6 +248,22 @@ exports.handler = async (event) => {
         if (error) throw error;
       }
 
+      if (body.handworkRows && body.handworkRows.length > 0) {
+        try {
+          const mappedRows = body.handworkRows.map(r => ({
+            order_id: orderId,
+            party_name: r.partyName,
+            sent_date: r.sentDate,
+            colour: r.colour,
+            expected_pcs: r.expectedPcs,
+            received_pcs: r.receivedPcs
+          }));
+          await supabase.from('handwork_rows').insert(mappedRows);
+        } catch (e) {
+          console.warn("handworkRows insert ignored on Netlify:", e);
+        }
+      }
+
       return jsonResponse(201, { 
         ...body, 
         id: orderId, 
@@ -240,6 +293,9 @@ exports.handler = async (event) => {
       await supabase.from('fabric_rows').delete().eq('order_id', id);
       await supabase.from('emb_rows').delete().eq('order_id', id);
       await supabase.from('stitch_rows').delete().eq('order_id', id);
+      try {
+        await supabase.from('handwork_rows').delete().eq('order_id', id);
+      } catch (e) {}
 
       // Re-insert
       if (body.fabricRows && body.fabricRows.length > 0) {
@@ -281,6 +337,22 @@ exports.handler = async (event) => {
           received_pcs: r.receivedPcs
         }));
         await supabase.from('stitch_rows').insert(mappedRows);
+      }
+
+      if (body.handworkRows && body.handworkRows.length > 0) {
+        try {
+          const mappedRows = body.handworkRows.map(r => ({
+            order_id: id,
+            party_name: r.partyName,
+            sent_date: r.sentDate,
+            colour: r.colour,
+            expected_pcs: r.expectedPcs,
+            received_pcs: r.receivedPcs
+          }));
+          await supabase.from('handwork_rows').insert(mappedRows);
+        } catch (e) {
+          console.warn("handworkRows update ignored on Netlify:", e);
+        }
       }
 
       return jsonResponse(200, { ...body, id });

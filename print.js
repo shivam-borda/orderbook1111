@@ -39,6 +39,14 @@ function printAs(mode) {
       fields: ['Fabric Name', 'Colour', 'Work Fab', 'Plain Fab', 'Total Fab', 'Received Fab', 'Work Pcs'],
       tbodyPrefix: 'fabric-tbody-'
     },
+    handwork: {
+      title: 'HAND WORK PARTY COPY',
+      heading: 'Hand Work Job Work',
+      icon: '&#x270B;',
+      thColor: '#d81b60',
+      fields: ['Colour', 'Expected Pcs', 'Received Pcs'],
+      tbodyPrefix: 'handwork-tbody-'
+    },
     embroidery: {
       title: 'EMBROIDERY PIPELINE',
       heading: 'Embroidery Job Work',
@@ -87,6 +95,12 @@ function printAs(mode) {
       var dEl = document.getElementById('emb-date-' + id);
       party = pEl ? pEl.value : '';
       pDate = dEl ? dEl.value : '';
+    } else if (mode === 'handwork') {
+      var pEl = document.getElementById('handwork-party-' + id);
+      var dEl = document.getElementById('handwork-date-' + id);
+      party = pEl ? pEl.value : '';
+      pDate = dEl ? dEl.value : '';
+      pDateLabel = 'Sent Date';
     } else if (mode === 'stitch') {
       var pEl = document.getElementById('stitch-party-' + id);
       var dEl = document.getElementById('stitch-date-' + id);

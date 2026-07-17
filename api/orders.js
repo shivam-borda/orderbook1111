@@ -29,17 +29,26 @@ module.exports = async (req, res) => {
     if (req.method === 'GET' && !id) {
       const q = (req.query && req.query.q) || '';
 
-      let query = supabase
-        .from('orders')
-        .select('*, fabric_rows(*), emb_rows(*), stitch_rows(*)')
-        .order('saved_at', { ascending: false });
-
-      if (q) {
-        query = query.ilike('d_no', `%${q}%`);
+      let query;
+      let hasHandwork = true;
+      try {
+        query = supabase
+          .from('orders')
+          .select('*, fabric_rows(*), emb_rows(*), stitch_rows(*), handwork_rows(*)')
+          .order('saved_at', { ascending: false });
+        if (q) query = query.ilike('d_no', `%${q}%`);
+        var { data, error } = await query;
+        if (error) throw error;
+      } catch (e) {
+        hasHandwork = false;
+        query = supabase
+          .from('orders')
+          .select('*, fabric_rows(*), emb_rows(*), stitch_rows(*)')
+          .order('saved_at', { ascending: false });
+        if (q) query = query.ilike('d_no', `%${q}%`);
+        var { data, error } = await query;
+        if (error) throw error;
       }
-
-      const { data, error } = await query;
-      if (error) throw error;
 
       const mapped = data.map(o => ({
         id: o.id,
@@ -59,6 +68,13 @@ module.exports = async (req, res) => {
           receivedFab: r.received_fab,
           workPcs: r.work_pcs
         })),
+        handworkRows: hasHandwork && o.handwork_rows ? o.handwork_rows.map(r => ({
+          partyName: r.party_name,
+          sentDate: r.sent_date,
+          colour: r.colour,
+          expectedPcs: r.expected_pcs,
+          receivedPcs: r.received_pcs
+        })) : [],
         embRows: o.emb_rows.map(r => ({
           partyName: r.party_name,
           date: r.date,
@@ -82,11 +98,26 @@ module.exports = async (req, res) => {
 
     // GET /api/orders/:id — get one
     if (req.method === 'GET' && id) {
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*, fabric_rows(*), emb_rows(*), stitch_rows(*)')
-        .eq('id', id)
-        .single();
+      let data, error, hasHandwork = true;
+      try {
+        const res = await supabase
+          .from('orders')
+          .select('*, fabric_rows(*), emb_rows(*), stitch_rows(*), handwork_rows(*)')
+          .eq('id', id)
+          .single();
+        data = res.data;
+        error = res.error;
+        if (error) throw error;
+      } catch (e) {
+        hasHandwork = false;
+        const res = await supabase
+          .from('orders')
+          .select('*, fabric_rows(*), emb_rows(*), stitch_rows(*)')
+          .eq('id', id)
+          .single();
+        data = res.data;
+        error = res.error;
+      }
 
       if (error) return res.status(404).json({ error: 'Not found' });
 
@@ -108,6 +139,13 @@ module.exports = async (req, res) => {
           receivedFab: r.received_fab,
           workPcs: r.work_pcs
         })),
+        handworkRows: hasHandwork && data.handwork_rows ? data.handwork_rows.map(r => ({
+          partyName: r.party_name,
+          sentDate: r.sent_date,
+          colour: r.colour,
+          expectedPcs: r.expected_pcs,
+          receivedPcs: r.received_pcs
+        })) : [],
         embRows: data.emb_rows.map(r => ({
           partyName: r.party_name,
           date: r.date,
@@ -192,6 +230,22 @@ module.exports = async (req, res) => {
         if (error) throw error;
       }
 
+      if (body.handworkRows && body.handworkRows.length > 0) {
+        try {
+          const mappedRows = body.handworkRows.map(r => ({
+            order_id: orderId,
+            party_name: r.partyName,
+            sent_date: r.sentDate,
+            colour: r.colour,
+            expected_pcs: r.expectedPcs,
+            received_pcs: r.receivedPcs
+          }));
+          await supabase.from('handwork_rows').insert(mappedRows);
+        } catch (e) {
+          console.warn("handworkRows post failed on lambda:", e);
+        }
+      }
+
       return res.status(201).json({
         ...body,
         id: orderId,
@@ -220,6 +274,9 @@ module.exports = async (req, res) => {
       await supabase.from('fabric_rows').delete().eq('order_id', id);
       await supabase.from('emb_rows').delete().eq('order_id', id);
       await supabase.from('stitch_rows').delete().eq('order_id', id);
+      try {
+        await supabase.from('handwork_rows').delete().eq('order_id', id);
+      } catch (e) {}
 
       if (body.fabricRows && body.fabricRows.length > 0) {
         const mappedRows = body.fabricRows.map(r => ({
@@ -260,6 +317,22 @@ module.exports = async (req, res) => {
           received_pcs: r.receivedPcs
         }));
         await supabase.from('stitch_rows').insert(mappedRows);
+      }
+
+      if (body.handworkRows && body.handworkRows.length > 0) {
+        try {
+          const mappedRows = body.handworkRows.map(r => ({
+            order_id: id,
+            party_name: r.partyName,
+            sent_date: r.sentDate,
+            colour: r.colour,
+            expected_pcs: r.expectedPcs,
+            received_pcs: r.receivedPcs
+          }));
+          await supabase.from('handwork_rows').insert(mappedRows);
+        } catch (e) {
+          console.warn("handworkRows put failed on lambda:", e);
+        }
       }
 
       return res.status(200).json({ ...body, id });

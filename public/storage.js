@@ -143,7 +143,13 @@ async function fetchAndCacheOrders(select) {
    LOAD SINGLE ORDER / DETAILS
 ───────────────────────────────────────── */
 async function loadOrder(id) {
-  var res = await sbFetch('orders?select=*,fabric_rows(*),emb_rows(*),stitch_rows(*)&id=eq.' + id);
+  var res;
+  try {
+    res = await sbFetch('orders?select=*,fabric_rows(*),emb_rows(*),stitch_rows(*),handwork_rows(*)&id=eq.' + id);
+    if (!res.ok) throw new Error('Query failed');
+  } catch (e) {
+    res = await sbFetch('orders?select=*,fabric_rows(*),emb_rows(*),stitch_rows(*)&id=eq.' + id);
+  }
   if (!res.ok) throw new Error('Failed to load order');
   var data = await res.json();
   if (!data || !data.length) throw new Error('Not found');
@@ -151,7 +157,13 @@ async function loadOrder(id) {
 }
 
 async function loadOrderDetails(id) {
-  var res = await sbFetch('orders?select=fabric_rows(*),emb_rows(*),stitch_rows(*)&id=eq.' + id);
+  var res;
+  try {
+    res = await sbFetch('orders?select=fabric_rows(*),emb_rows(*),stitch_rows(*),handwork_rows(*)&id=eq.' + id);
+    if (!res.ok) throw new Error('Query failed');
+  } catch (e) {
+    res = await sbFetch('orders?select=fabric_rows(*),emb_rows(*),stitch_rows(*)&id=eq.' + id);
+  }
   if (!res.ok) throw new Error('Failed to load order details');
   var data = await res.json();
   if (!data || !data.length) throw new Error('Not found');
@@ -159,7 +171,8 @@ async function loadOrderDetails(id) {
   return {
     fabricRows: (o.fabric_rows || []).map(mapFabricRow),
     embRows: (o.emb_rows || []).map(mapEmbRow),
-    stitchRows: (o.stitch_rows || []).map(mapStitchRow)
+    stitchRows: (o.stitch_rows || []).map(mapStitchRow),
+    handworkRows: (o.handwork_rows || []).map(mapHandworkRow)
   };
 }
 
@@ -177,7 +190,8 @@ function mapOrder(o) {
     image: o.image,
     fabricRows: (o.fabric_rows || []).map(mapFabricRow),
     embRows: (o.emb_rows || []).map(mapEmbRow),
-    stitchRows: (o.stitch_rows || []).map(mapStitchRow)
+    stitchRows: (o.stitch_rows || []).map(mapStitchRow),
+    handworkRows: (o.handwork_rows || []).map(mapHandworkRow)
   };
 }
 
@@ -397,6 +411,27 @@ async function saveOrder(orderData) {
     });
   }
 
+  // Insert handwork rows (safe catch if table not created yet)
+  if (orderData.handworkRows && orderData.handworkRows.length > 0) {
+    try {
+      await sbFetch('handwork_rows', {
+        method: 'POST',
+        body: orderData.handworkRows.map(function (r) {
+          return {
+            order_id: orderId,
+            party_name: r.partyName,
+            sent_date: r.sentDate,
+            colour: r.colour,
+            expected_pcs: r.expectedPcs,
+            received_pcs: r.receivedPcs
+          };
+        })
+      });
+    } catch (e) {
+      console.warn("handwork_rows insert failed (table might not exist):", e);
+    }
+  }
+
   return order;
 }
 
@@ -427,6 +462,9 @@ async function updateOrder(id, orderData) {
   await sbFetch('fabric_rows?order_id=eq.' + id, { method: 'DELETE' });
   await sbFetch('emb_rows?order_id=eq.' + id, { method: 'DELETE' });
   await sbFetch('stitch_rows?order_id=eq.' + id, { method: 'DELETE' });
+  try {
+    await sbFetch('handwork_rows?order_id=eq.' + id, { method: 'DELETE' });
+  } catch (e) {}
 
   // Re-insert fabric rows
   if (orderData.fabricRows && orderData.fabricRows.length > 0) {
@@ -482,6 +520,27 @@ async function updateOrder(id, orderData) {
         };
       })
     });
+  }
+
+  // Re-insert handwork rows
+  if (orderData.handworkRows && orderData.handworkRows.length > 0) {
+    try {
+      await sbFetch('handwork_rows', {
+        method: 'POST',
+        body: orderData.handworkRows.map(function (r) {
+          return {
+            order_id: id,
+            party_name: r.partyName,
+            sent_date: r.sentDate,
+            colour: r.colour,
+            expected_pcs: r.expectedPcs,
+            received_pcs: r.receivedPcs
+          };
+        })
+      });
+    } catch (e) {
+      console.warn("handwork_rows update failed (table might not exist):", e);
+    }
   }
 }
 
@@ -843,24 +902,26 @@ function getPartiesStats(orders) {
       if (!name || !name.trim()) return;
       var key = name.trim();
       if (!parties[key]) {
-        parties[key] = { name: key, fabricCount: 0, embCount: 0, stitchCount: 0, totalCount: 0 };
+        parties[key] = { name: key, fabricCount: 0, embCount: 0, handworkCount: 0, stitchCount: 0, totalCount: 0 };
       }
       if (!seenInOrder[key + '-' + type]) {
         seenInOrder[key + '-' + type] = true;
         if (type === 'fabric') parties[key].fabricCount++;
         if (type === 'emb') parties[key].embCount++;
+        if (type === 'handwork') parties[key].handworkCount++;
         if (type === 'stitch') parties[key].stitchCount++;
       }
     }
     
     (order.fabricRows || []).forEach(function(r) { logParty(r.partyName, 'fabric'); });
     (order.embRows || []).forEach(function(r) { logParty(r.partyName, 'emb'); });
+    (order.handworkRows || []).forEach(function(r) { logParty(r.partyName, 'handwork'); });
     (order.stitchRows || []).forEach(function(r) { logParty(r.partyName, 'stitch'); });
   });
   
   return Object.keys(parties).map(function (k) {
     var p = parties[k];
-    p.totalCount = p.fabricCount + p.embCount + p.stitchCount;
+    p.totalCount = p.fabricCount + p.embCount + p.handworkCount + p.stitchCount;
     return p;
   }).sort(function(a, b) { return b.totalCount - a.totalCount; });
 }
@@ -921,6 +982,35 @@ function getEmbroideryPipeline(orders) {
         totalSent: totalSent,
         totalReturned: totalReturned,
         balance: balance,
+        status: balance <= 0 ? 'completed' : 'pending'
+      });
+    });
+  });
+  return rows;
+}
+
+// Get flattened handwork rows with parent order metadata
+function getHandworkPipeline(orders) {
+  var rows = [];
+  orders.forEach(function (order) {
+    (order.handworkRows || []).forEach(function (r) {
+      var expected = parseFloat(r.expectedPcs) || 0;
+      var received = parseFloat(r.receivedPcs) || 0;
+      var balance = expected - received;
+      var pct = expected > 0 ? Math.min(100, Math.round((received / expected) * 100)) : 0;
+      
+      rows.push({
+        orderId: order.id,
+        orderNo: order.orderNo,
+        dNo: order.dNo,
+        date: order.date,
+        partyName: r.partyName,
+        sentDate: r.sentDate,
+        colour: r.colour,
+        expectedPcs: r.expectedPcs,
+        receivedPcs: r.receivedPcs,
+        balance: balance,
+        pct: pct,
         status: balance <= 0 ? 'completed' : 'pending'
       });
     });

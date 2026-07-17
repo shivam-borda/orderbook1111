@@ -307,6 +307,22 @@ const server = http.createServer(async (req, res) => {
           if (error) return jsonError(res, 500, error.message);
         }
 
+        if (body.handworkRows && body.handworkRows.length > 0) {
+          try {
+            const mappedRows = body.handworkRows.map(r => ({
+              order_id: orderId,
+              party_name: r.partyName,
+              sent_date: r.sentDate,
+              colour: r.colour,
+              expected_pcs: r.expectedPcs,
+              received_pcs: r.receivedPcs
+            }));
+            await supabase.from('handwork_rows').insert(mappedRows);
+          } catch (e) {
+            console.warn("handwork_rows insert skipped:", e);
+          }
+        }
+
         res.writeHead(201, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify({ 
           ...body, 
@@ -337,6 +353,9 @@ const server = http.createServer(async (req, res) => {
         await supabase.from('fabric_rows').delete().eq('order_id', id);
         await supabase.from('emb_rows').delete().eq('order_id', id);
         await supabase.from('stitch_rows').delete().eq('order_id', id);
+        try {
+          await supabase.from('handwork_rows').delete().eq('order_id', id);
+        } catch (e) {}
 
         // Re-insert
         if (body.fabricRows && body.fabricRows.length > 0) {
@@ -378,6 +397,22 @@ const server = http.createServer(async (req, res) => {
             received_pcs: r.receivedPcs
           }));
           await supabase.from('stitch_rows').insert(mappedRows);
+        }
+
+        if (body.handworkRows && body.handworkRows.length > 0) {
+          try {
+            const mappedRows = body.handworkRows.map(r => ({
+              order_id: id,
+              party_name: r.partyName,
+              sent_date: r.sentDate,
+              colour: r.colour,
+              expected_pcs: r.expectedPcs,
+              received_pcs: r.receivedPcs
+            }));
+            await supabase.from('handwork_rows').insert(mappedRows);
+          } catch (e) {
+            console.warn("handwork_rows update skipped:", e);
+          }
         }
 
         return jsonOk(res, { ...body, id });

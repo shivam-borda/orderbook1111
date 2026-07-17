@@ -523,6 +523,7 @@ tbody tr:hover {
 /* Specific theme columns / sections */
 th.fabric-th { background: var(--primary-light); color: var(--primary); }
 th.embroidery-th { background: var(--secondary-light); color: var(--secondary); }
+th.handwork-th { background: #fce4ec; color: #c2185b; }
 th.stitching-th { background: var(--teal-light); color: var(--teal); }
 
 /* Progress bars for stitching */
@@ -1418,6 +1419,41 @@ th.stitching-th { background: var(--teal-light); color: var(--teal); }
   .detail-view-pane {
     max-height: none;
   }
+}
+
+/* Sidebar dropdown menu styles */
+.sidebar-dropdown {
+  display: flex;
+  flex-direction: column;
+}
+
+.dropdown-submenu {
+  display: none;
+  background: rgba(0, 0, 0, 0.15);
+  flex-direction: column;
+}
+
+.dropdown-submenu.open {
+  display: flex;
+}
+
+.dropdown-toggle .dropdown-arrow {
+  transition: transform 0.2s ease;
+}
+
+.dropdown-toggle.open .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+/* Indent subitems */
+.dropdown-submenu .nav-item {
+  padding-left: 42px;
+  font-size: 0.88rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.dropdown-submenu .nav-item:hover {
+  background: var(--bg-sidebar-hover);
 }
 
 /* ═══════════════════════════════════════════
