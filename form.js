@@ -1904,22 +1904,36 @@ function cancelEdit() {
    ───────────────────────────────────────── */
 var _cropState = { id: null, img: null, startX: 0, startY: 0, endX: 0, endY: 0, dragging: false };
 
+function getImgElements(id) {
+  var isReady = typeof id === 'string' && id.startsWith('r');
+  var prefix = isReady ? 'r' : '';
+  var index = isReady ? id.substring(1) : id;
+  return {
+    dropzone: document.getElementById(prefix + 'dropzone-' + index),
+    imgfile: document.getElementById(prefix + 'imgfile-' + index),
+    removeimg: document.getElementById(prefix + 'removeimg-' + index)
+  };
+}
+
 function handleImageSelect(input, id) {
   if (input.files && input.files[0]) openCropEditor(input.files[0], id);
 }
 
 function handleDragOver(e, id) {
   e.preventDefault();
-  document.getElementById('dropzone-' + id).classList.add('dragover');
+  var els = getImgElements(id);
+  if (els.dropzone) els.dropzone.classList.add('dragover');
 }
 
 function handleDragLeave(e, id) {
-  document.getElementById('dropzone-' + id).classList.remove('dragover');
+  var els = getImgElements(id);
+  if (els.dropzone) els.dropzone.classList.remove('dragover');
 }
 
 function handleDrop(e, id) {
   e.preventDefault();
-  document.getElementById('dropzone-' + id).classList.remove('dragover');
+  var els = getImgElements(id);
+  if (els.dropzone) els.dropzone.classList.remove('dragover');
   var file = e.dataTransfer.files[0];
   if (file && file.type.startsWith('image/')) openCropEditor(file, id);
 }
@@ -2109,11 +2123,16 @@ function closeCropModal() {
 }
 
 function setDropZoneImage(id, src) {
-  var zone = document.getElementById('dropzone-' + id);
-  var existing = zone.querySelector('img.preview-img');
+  var els = getImgElements(id);
+  if (!els.dropzone) return;
+  var existing = els.dropzone.querySelector('img.preview-img');
   if (existing) existing.remove();
-  zone.querySelector('.drop-icon').style.display = 'none';
-  zone.querySelector('.drop-text').style.display = 'none';
+  
+  var icon = els.dropzone.querySelector('.drop-icon');
+  if (icon) icon.style.display = 'none';
+  var txt = els.dropzone.querySelector('.drop-text');
+  if (txt) txt.style.display = 'none';
+
   var img = document.createElement('img');
   img.src = src;
   img.className = 'preview-img';
@@ -2121,8 +2140,8 @@ function setDropZoneImage(id, src) {
   img.style.cursor = 'pointer';
   img.title = 'Click to preview';
   img.onclick = function (e) { e.stopPropagation(); showImagePreview(src); };
-  zone.appendChild(img);
-  document.getElementById('removeimg-' + id).style.display = 'inline-block';
+  els.dropzone.appendChild(img);
+  if (els.removeimg) els.removeimg.style.display = 'inline-block';
 }
 
 function showImagePreview(src) {
@@ -2147,13 +2166,17 @@ function closeImagePreview() {
 }
 
 function removeImage(id) {
-  var zone = document.getElementById('dropzone-' + id);
-  var img = zone.querySelector('img.preview-img');
+  var els = getImgElements(id);
+  var img = els.dropzone ? els.dropzone.querySelector('img.preview-img') : null;
   if (img) img.remove();
-  zone.querySelector('.drop-icon').style.display = '';
-  zone.querySelector('.drop-text').style.display = '';
-  document.getElementById('imgfile-' + id).value = '';
-  document.getElementById('removeimg-' + id).style.display = 'none';
+  if (els.dropzone) {
+    var icon = els.dropzone.querySelector('.drop-icon');
+    if (icon) icon.style.display = '';
+    var txt = els.dropzone.querySelector('.drop-text');
+    if (txt) txt.style.display = '';
+  }
+  if (els.imgfile) els.imgfile.value = '';
+  if (els.removeimg) els.removeimg.style.display = 'none';
 }
 
 /* ─────────────────────────────────────────
@@ -2594,6 +2617,9 @@ function collectReadyDesigns() {
     var fabric = val('r-fabric-' + id);
     var date = val('r-date-' + id);
 
+    var imgEl = block.querySelector('img.preview-img');
+    var image = imgEl ? imgEl.src : '';
+
     var fabricRows = [];
     document.querySelectorAll('#r-fab-tbody-' + id + ' tr').forEach(function (row) {
       var inputs = row.querySelectorAll('input');
@@ -2615,7 +2641,7 @@ function collectReadyDesigns() {
       stitchRows.push({ partyName: stitchParty, sentDate: stitchDate, expectedPcs: inp[0] ? inp[0].value : '', receivedPcs: inp[1] ? inp[1].value : '' });
     });
 
-    designs.push({ partyName: partyName, stitchParty: stitchParty, dNo: dNo, fabric: fabric, date: date, fabricRows: fabricRows, stitchRows: stitchRows });
+    designs.push({ partyName: partyName, stitchParty: stitchParty, dNo: dNo, fabric: fabric, date: date, image: image, fabricRows: fabricRows, stitchRows: stitchRows });
   });
   return designs;
 }
@@ -2648,6 +2674,7 @@ async function submitReadyOrder() {
         dNo: d.dNo,
         fabric: d.fabric,
         date: d.date,
+        image: d.image,
         type: 'ready',
         fabricRows: d.fabricRows.map(function (r) {
           return {
