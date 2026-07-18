@@ -1794,6 +1794,14 @@ async function submitForm() {
   });
   if (!valid) { alert('Please fill in all Design Numbers.'); return; }
 
+  var btn = document.getElementById('submit-btn');
+  if (btn) {
+    if (btn.disabled) return;
+    btn.disabled = true;
+    btn.dataset.originalText = btn.innerHTML;
+    btn.innerHTML = '&#x1F504; Saving, Please wait...';
+  }
+
   var loader = document.getElementById('page-loader');
   if (loader) loader.style.display = 'flex';
 
@@ -1859,6 +1867,12 @@ async function submitForm() {
     console.error(err);
   } finally {
     if (loader) loader.style.display = 'none';
+    if (btn) {
+      btn.disabled = false;
+      if (btn.dataset.originalText) {
+        btn.innerHTML = btn.dataset.originalText;
+      }
+    }
   }
 }
 
@@ -2699,6 +2713,17 @@ async function submitReadyOrder() {
     return;
   }
 
+  var btn = document.getElementById('ready-submit-btn');
+  if (btn) {
+    if (btn.disabled) return;
+    btn.disabled = true;
+    btn.dataset.originalText = btn.innerHTML;
+    btn.innerHTML = '&#x1F504; Saving, Please wait...';
+  }
+
+  var loader = document.getElementById('page-loader');
+  if (loader) loader.style.display = 'flex';
+
   try {
     var all = await loadAllOrders();
     var maxOrderNo = 0;
@@ -2741,6 +2766,14 @@ async function submitReadyOrder() {
   } catch (err) {
     console.error('Ready order save error:', err);
     alert('Error saving ready order: ' + err.message);
+  } finally {
+    if (loader) loader.style.display = 'none';
+    if (btn) {
+      btn.disabled = false;
+      if (btn.dataset.originalText) {
+        btn.innerHTML = btn.dataset.originalText;
+      }
+    }
   }
 }
 
