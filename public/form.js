@@ -713,19 +713,12 @@ function selectEmbroideryParty(partyName) {
   var totalBal = totalSent - totalRet;
 
   var tableRowsHtml = partyRows.map(function (r, idx) {
-    var chipClass = r.status === 'completed' ? 'chip-completed' : 'chip-pending';
     return '<tr>' +
       '<td>' + escHtml(r.orderNo) + '</td>' +
       '<td>' + escHtml(r.dNo) + '</td>' +
       '<td>' + escHtml(r.rowDate) + '</td>' +
-      '<td>' + escHtml(r.sentFront || '') + '</td>' +
-      '<td>' + escHtml(r.sentBack || '') + '</td>' +
-      '<td>' + escHtml(r.sentSleeve || '') + '</td>' +
-      '<td>' + escHtml(r.returnFront || '') + '</td>' +
-      '<td>' + escHtml(r.returnBack || '') + '</td>' +
-      '<td>' + escHtml(r.returnSleeve || '') + '</td>' +
-      '<td>' + r.totalSent + ' m</td>' +
-      '<td>' + r.totalReturned + ' m</td>' +
+      '<td>' + escHtml(r.sentFront || '') + ' / ' + escHtml(r.sentBack || '') + ' / ' + escHtml(r.sentSleeve || '') + '</td>' +
+      '<td>' + escHtml(r.returnFront || '') + ' / ' + escHtml(r.returnBack || '') + ' / ' + escHtml(r.returnSleeve || '') + '</td>' +
       '<td>' +
       '<div style="display:flex;gap:4px;">' +
       '<button class="btn btn-outline btn-sm" onclick="printOrderSlip(\'' + r.orderId + '\', \'embroidery\')" style="padding:4px 8px;font-size:0.75rem;">Print</button>' +
@@ -751,20 +744,14 @@ function selectEmbroideryParty(partyName) {
     '<th class="embroidery-th">Order No</th>' +
     '<th class="embroidery-th">Design No</th>' +
     '<th class="embroidery-th">Sent Date</th>' +
-    '<th class="embroidery-th">Sent Front</th>' +
-    '<th class="embroidery-th">Sent Back</th>' +
-    '<th class="embroidery-th">Sent Sleeve</th>' +
-    '<th class="embroidery-th">Ret Front</th>' +
-    '<th class="embroidery-th">Ret Back</th>' +
-    '<th class="embroidery-th">Ret Sleeve</th>' +
-    '<th class="embroidery-th">Total Sent</th>' +
-    '<th class="embroidery-th">Total Ret</th>' +
+    '<th class="embroidery-th">Sent (F/B/S)</th>' +
+    '<th class="embroidery-th">Returned (F/B/S)</th>' +
     '<th class="embroidery-th">Actions</th>' +
     '</tr>' +
     '<tr class="filter-row">' +
     '<th><input type="text" id="emb-filter-orderno" placeholder="Filter..." oninput="filterEmbroideryPartyRows()" style="width:100%;box-sizing:border-box;padding:4px 6px;font-size:0.75rem;border:1px solid #ccc;border-radius:4px;font-weight:normal;color:#333;" /></th>' +
     '<th><input type="text" id="emb-filter-dno" placeholder="Filter..." oninput="filterEmbroideryPartyRows()" style="width:100%;box-sizing:border-box;padding:4px 6px;font-size:0.75rem;border:1px solid #ccc;border-radius:4px;font-weight:normal;color:#333;" /></th>' +
-    '<th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th>' +
+    '<th></th><th></th><th></th><th></th>' +
     '</tr>' +
     '</thead>' +
     '<tbody>' + tableRowsHtml + '</tbody>' +
