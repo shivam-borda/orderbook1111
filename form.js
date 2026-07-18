@@ -90,6 +90,8 @@ async function refreshActiveView() {
       renderEmbroideryPipeline();
     } else if (activeTab === 'stitching') {
       renderStitchingPipeline();
+    } else if (activeTab === 'handwork') {
+      renderHandworkPipeline();
     }
   } catch (err) {
     console.error('Error refreshing view:', err);

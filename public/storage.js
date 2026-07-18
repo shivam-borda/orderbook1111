@@ -230,6 +230,16 @@ function mapStitchRow(r) {
   };
 }
 
+function mapHandworkRow(r) {
+  return {
+    partyName: r.party_name,
+    sentDate: r.sent_date,
+    colour: r.colour,
+    expectedPcs: r.expected_pcs,
+    receivedPcs: r.received_pcs
+  };
+}
+
 
 /* ─────────────────────────────────────────
    UPLOAD IMAGE TO SUPABASE STORAGE
