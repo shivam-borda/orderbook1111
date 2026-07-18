@@ -161,9 +161,11 @@ function filterOrders() {
     if (dno && String(order.dNo).toLowerCase().indexOf(dno) === -1) return false;
     if (party) {
       var matchesParty = false;
-      (order.fabricRows || []).forEach(function (r) { if (r.partyName && r.partyName.toLowerCase() === party) matchesParty = true; });
-      (order.embRows || []).forEach(function (r) { if (r.partyName && r.partyName.toLowerCase() === party) matchesParty = true; });
-      (order.stitchRows || []).forEach(function (r) { if (r.partyName && r.partyName.toLowerCase() === party) matchesParty = true; });
+      var pClean = party.trim().toLowerCase();
+      (order.fabricRows || []).forEach(function (r) { if (r.partyName && r.partyName.trim().toLowerCase() === pClean) matchesParty = true; });
+      (order.embRows || []).forEach(function (r) { if (r.partyName && r.partyName.trim().toLowerCase() === pClean) matchesParty = true; });
+      (order.stitchRows || []).forEach(function (r) { if (r.partyName && r.partyName.trim().toLowerCase() === pClean) matchesParty = true; });
+      (order.handworkRows || []).forEach(function (r) { if (r.partyName && r.partyName.trim().toLowerCase() === pClean) matchesParty = true; });
       if (!matchesParty) return false;
     }
     return true;
@@ -226,39 +228,58 @@ function selectOrder(orderId) {
     ? '<div class="order-image-box" style="width:140px;height:140px;margin-bottom:0;"><img src="' + order.image + '" onclick="showImagePreview(\'' + order.image + '\')" /></div>'
     : '<div class="order-image-box" style="width:140px;height:140px;display:flex;align-items:center;justify-content:center;color:#999;font-size:0.75rem;margin-bottom:0;">No Image</div>';
 
-  var fabricRows = (order.fabricRows || []).map(function (r, idx) {
-    return '<tr>' +
-      '<td>' + (idx + 1) + '</td>' +
-      '<td>' + escHtml(r.partyName) + '</td>' +
-      '<td>' + escHtml(r.fabricName) + '</td>' +
-      '<td>' + escHtml(r.colour) + '</td>' +
-      '<td>' + escHtml(r.workFab) + '</td>' +
-      '<td>' + escHtml(r.plainFab) + '</td>' +
-      '<td>' + escHtml(r.totalFab) + '</td>' +
-      '<td>' + escHtml(r.receivedFab) + '</td>' +
-      '<td>' + escHtml(r.workPcs) + '</td>' +
-      '</tr>';
-  }).join('');
+  var fabricRows = (order.fabricRows || [])
+    .filter(function (r) { return r.partyName && r.partyName.trim(); })
+    .map(function (r, idx) {
+      return '<tr>' +
+        '<td>' + (idx + 1) + '</td>' +
+        '<td>' + escHtml(r.partyName) + '</td>' +
+        '<td>' + escHtml(r.fabricName) + '</td>' +
+        '<td>' + escHtml(r.colour) + '</td>' +
+        '<td>' + escHtml(r.workFab) + '</td>' +
+        '<td>' + escHtml(r.plainFab) + '</td>' +
+        '<td>' + escHtml(r.totalFab) + '</td>' +
+        '<td>' + escHtml(r.receivedFab) + '</td>' +
+        '<td>' + escHtml(r.workPcs) + '</td>' +
+        '</tr>';
+    }).join('');
 
-  var embRows = (order.embRows || []).map(function (r, idx) {
-    return '<tr>' +
-      '<td>' + (idx + 1) + '</td>' +
-      '<td>' + escHtml(r.partyName) + '</td>' +
-      '<td>' + escHtml(r.date) + '</td>' +
-      '<td>' + escHtml(r.sentFront) + ' / ' + escHtml(r.sentBack) + ' / ' + escHtml(r.sentSleeve) + '</td>' +
-      '<td>' + escHtml(r.returnFront) + ' / ' + escHtml(r.returnBack) + ' / ' + escHtml(r.returnSleeve) + '</td>' +
-      '</tr>';
-  }).join('');
+  var embRows = (order.embRows || [])
+    .filter(function (r) { return r.partyName && r.partyName.trim(); })
+    .map(function (r, idx) {
+      return '<tr>' +
+        '<td>' + (idx + 1) + '</td>' +
+        '<td>' + escHtml(r.partyName) + '</td>' +
+        '<td>' + escHtml(r.date) + '</td>' +
+        '<td>' + escHtml(r.sentFront) + ' / ' + escHtml(r.sentBack) + ' / ' + escHtml(r.sentSleeve) + '</td>' +
+        '<td>' + escHtml(r.returnFront) + ' / ' + escHtml(r.returnBack) + ' / ' + escHtml(r.returnSleeve) + '</td>' +
+        '</tr>';
+    }).join('');
 
-  var stitchRows = (order.stitchRows || []).map(function (r, idx) {
-    return '<tr>' +
-      '<td>' + (idx + 1) + '</td>' +
-      '<td>' + escHtml(r.partyName) + '</td>' +
-      '<td>' + escHtml(r.sentDate) + '</td>' +
-      '<td>' + escHtml(r.expectedPcs) + '</td>' +
-      '<td>' + escHtml(r.receivedPcs) + '</td>' +
-      '</tr>';
-  }).join('');
+  var stitchRows = (order.stitchRows || [])
+    .filter(function (r) { return r.partyName && r.partyName.trim(); })
+    .map(function (r, idx) {
+      return '<tr>' +
+        '<td>' + (idx + 1) + '</td>' +
+        '<td>' + escHtml(r.partyName) + '</td>' +
+        '<td>' + escHtml(r.sentDate) + '</td>' +
+        '<td>' + escHtml(r.expectedPcs) + '</td>' +
+        '<td>' + escHtml(r.receivedPcs) + '</td>' +
+        '</tr>';
+    }).join('');
+
+  var handworkRows = (order.handworkRows || [])
+    .filter(function (r) { return r.partyName && r.partyName.trim(); })
+    .map(function (r, idx) {
+      return '<tr>' +
+        '<td>' + (idx + 1) + '</td>' +
+        '<td>' + escHtml(r.partyName) + '</td>' +
+        '<td>' + escHtml(r.sentDate) + '</td>' +
+        '<td>' + escHtml(r.colour) + '</td>' +
+        '<td>' + escHtml(r.expectedPcs) + '</td>' +
+        '<td>' + escHtml(r.receivedPcs) + '</td>' +
+        '</tr>';
+    }).join('');
 
   detailContainer.innerHTML =
     '<div class="detail-header">' +
@@ -283,10 +304,12 @@ function selectOrder(orderId) {
     '<div class="order-card-detail-tables" style="padding:0;">' +
     (fabricRows ? '<div class="table-card"><div class="table-header-row"><span class="table-title">Fabric Allocations</span></div><div class="table-wrap"><table><thead><tr><th class="fabric-th">#</th><th class="fabric-th">Party Name</th><th class="fabric-th">Fabric Name</th><th class="fabric-th">Colour</th><th class="fabric-th">Work Fab</th><th class="fabric-th">Plain Fab</th><th class="fabric-th">Total Fab</th><th class="fabric-th">Received Fab</th><th class="fabric-th">Work Pcs</th></tr></thead><tbody>' + fabricRows + '</tbody></table></div></div>' : '') +
     (embRows ? '<div class="table-card"><div class="table-header-row"><span class="table-title">Embroidery Details</span></div><div class="table-wrap"><table><thead><tr><th class="embroidery-th">#</th><th class="embroidery-th">Party</th><th class="embroidery-th">Sent Date</th><th class="embroidery-th">Sent (F/B/S)</th><th class="embroidery-th">Returned (F/B/S)</th></tr></thead><tbody>' + embRows + '</tbody></table></div></div>' : '') +
+    (handworkRows ? '<div class="table-card"><div class="table-header-row"><span class="table-title">Hand Work Details</span></div><div class="table-wrap"><table><thead><tr><th class="handwork-th">#</th><th class="handwork-th">Party</th><th class="handwork-th">Sent Date</th><th class="handwork-th">Colour</th><th class="handwork-th">Expected Pcs</th><th class="handwork-th">Received Pcs</th></tr></thead><tbody>' + handworkRows + '</tbody></table></div></div>' : '') +
     (stitchRows ? '<div class="table-card"><div class="table-header-row"><span class="table-title">Stitching Progress</span></div><div class="table-wrap"><table><thead><tr><th class="stitching-th">#</th><th class="stitching-th">Party</th><th class="stitching-th">Sent Date</th><th class="stitching-th">Expected Pcs</th><th class="stitching-th">Received Pcs</th></tr></thead><tbody>' + stitchRows + '</tbody></table></div></div>' : '') +
     '<div style="display:flex;gap:10px;justify-content:center;padding:10px 0 0 0;" class="order-actions">' +
     '<button class="btn btn-primary btn-sm" onclick="printOrderSlip(\'' + order.id + '\', \'fabric\')">&#x1F5A8; Print Fabric</button>' +
     '<button class="btn btn-secondary btn-sm" onclick="printOrderSlip(\'' + order.id + '\', \'embroidery\')">&#x1FAE7; Print Embroidery</button>' +
+    '<button class="btn btn-sm" style="background:#d81b60;color:#fff;" onclick="printOrderSlip(\'' + order.id + '\', \'handwork\')">&#x1FAE7; Print Hand Work</button>' +
     '<button class="btn btn-teal btn-sm" onclick="printOrderSlip(\'' + order.id + '\', \'stitch\')">&#x2702;&#xFE0F; Print Stitching</button>' +
     '</div>' +
     '</div>' +
