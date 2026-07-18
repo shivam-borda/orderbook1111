@@ -247,12 +247,28 @@ function selectOrder(orderId) {
   var embRows = (order.embRows || [])
     .filter(function (r) { return r.partyName && r.partyName.trim(); })
     .map(function (r, idx) {
+      var sentFront = parseFloat(r.sentFront) || 0;
+      var sentBack = parseFloat(r.sentBack) || 0;
+      var sentSleeve = parseFloat(r.sentSleeve) || 0;
+      var returnFront = parseFloat(r.returnFront) || 0;
+      var returnBack = parseFloat(r.returnBack) || 0;
+      var returnSleeve = parseFloat(r.returnSleeve) || 0;
+
+      var totalSent = sentFront + sentBack + sentSleeve;
+      var totalReturned = returnFront + returnBack + returnSleeve;
+
       return '<tr>' +
         '<td>' + (idx + 1) + '</td>' +
         '<td>' + escHtml(r.partyName) + '</td>' +
         '<td>' + escHtml(r.date) + '</td>' +
-        '<td>' + escHtml(r.sentFront) + ' / ' + escHtml(r.sentBack) + ' / ' + escHtml(r.sentSleeve) + '</td>' +
-        '<td>' + escHtml(r.returnFront) + ' / ' + escHtml(r.returnBack) + ' / ' + escHtml(r.returnSleeve) + '</td>' +
+        '<td>' + escHtml(r.sentFront || '') + '</td>' +
+        '<td>' + escHtml(r.sentBack || '') + '</td>' +
+        '<td>' + escHtml(r.sentSleeve || '') + '</td>' +
+        '<td>' + escHtml(r.returnFront || '') + '</td>' +
+        '<td>' + escHtml(r.returnBack || '') + '</td>' +
+        '<td>' + escHtml(r.returnSleeve || '') + '</td>' +
+        '<td>' + totalSent + ' m</td>' +
+        '<td>' + totalReturned + ' m</td>' +
         '</tr>';
     }).join('');
 
@@ -303,7 +319,7 @@ function selectOrder(orderId) {
     '</div>' +
     '<div class="order-card-detail-tables" style="padding:0;">' +
     (fabricRows ? '<div class="table-card"><div class="table-header-row"><span class="table-title">Fabric Allocations</span></div><div class="table-wrap"><table><thead><tr><th class="fabric-th">#</th><th class="fabric-th">Party Name</th><th class="fabric-th">Fabric Name</th><th class="fabric-th">Colour</th><th class="fabric-th">Work Fab</th><th class="fabric-th">Plain Fab</th><th class="fabric-th">Total Fab</th><th class="fabric-th">Received Fab</th><th class="fabric-th">Work Pcs</th></tr></thead><tbody>' + fabricRows + '</tbody></table></div></div>' : '') +
-    (embRows ? '<div class="table-card"><div class="table-header-row"><span class="table-title">Embroidery Details</span></div><div class="table-wrap"><table><thead><tr><th class="embroidery-th">#</th><th class="embroidery-th">Party</th><th class="embroidery-th">Sent Date</th><th class="embroidery-th">Sent (F/B/S)</th><th class="embroidery-th">Returned (F/B/S)</th></tr></thead><tbody>' + embRows + '</tbody></table></div></div>' : '') +
+    (embRows ? '<div class="table-card"><div class="table-header-row"><span class="table-title">Embroidery Details</span></div><div class="table-wrap"><table><thead><tr><th class="embroidery-th">#</th><th class="embroidery-th">Party</th><th class="embroidery-th">Sent Date</th><th class="embroidery-th">Sent Front</th><th class="embroidery-th">Sent Back</th><th class="embroidery-th">Sent Sleeve</th><th class="embroidery-th">Ret Front</th><th class="embroidery-th">Ret Back</th><th class="embroidery-th">Ret Sleeve</th><th class="embroidery-th">Total Sent</th><th class="embroidery-th">Total Returned</th></tr></thead><tbody>' + embRows + '</tbody></table></div></div>' : '') +
     (handworkRows ? '<div class="table-card"><div class="table-header-row"><span class="table-title">Hand Work Details</span></div><div class="table-wrap"><table><thead><tr><th class="handwork-th">#</th><th class="handwork-th">Party</th><th class="handwork-th">Sent Date</th><th class="handwork-th">Colour</th><th class="handwork-th">Expected Pcs</th><th class="handwork-th">Received Pcs</th></tr></thead><tbody>' + handworkRows + '</tbody></table></div></div>' : '') +
     (stitchRows ? '<div class="table-card"><div class="table-header-row"><span class="table-title">Stitching Progress</span></div><div class="table-wrap"><table><thead><tr><th class="stitching-th">#</th><th class="stitching-th">Party</th><th class="stitching-th">Sent Date</th><th class="stitching-th">Expected Pcs</th><th class="stitching-th">Received Pcs</th></tr></thead><tbody>' + stitchRows + '</tbody></table></div></div>' : '') +
     '<div style="display:flex;gap:10px;justify-content:center;padding:10px 0 0 0;" class="order-actions">' +
@@ -713,12 +729,19 @@ function selectEmbroideryParty(partyName) {
   var totalBal = totalSent - totalRet;
 
   var tableRowsHtml = partyRows.map(function (r, idx) {
+    var chipClass = r.status === 'completed' ? 'chip-completed' : 'chip-pending';
     return '<tr>' +
       '<td>' + escHtml(r.orderNo) + '</td>' +
       '<td>' + escHtml(r.dNo) + '</td>' +
       '<td>' + escHtml(r.rowDate) + '</td>' +
-      '<td>' + escHtml(r.sentFront || '') + ' / ' + escHtml(r.sentBack || '') + ' / ' + escHtml(r.sentSleeve || '') + '</td>' +
-      '<td>' + escHtml(r.returnFront || '') + ' / ' + escHtml(r.returnBack || '') + ' / ' + escHtml(r.returnSleeve || '') + '</td>' +
+      '<td>' + escHtml(r.sentFront || '') + '</td>' +
+      '<td>' + escHtml(r.sentBack || '') + '</td>' +
+      '<td>' + escHtml(r.sentSleeve || '') + '</td>' +
+      '<td>' + escHtml(r.returnFront || '') + '</td>' +
+      '<td>' + escHtml(r.returnBack || '') + '</td>' +
+      '<td>' + escHtml(r.returnSleeve || '') + '</td>' +
+      '<td>' + r.totalSent + ' m</td>' +
+      '<td>' + r.totalReturned + ' m</td>' +
       '<td>' +
       '<div style="display:flex;gap:4px;">' +
       '<button class="btn btn-outline btn-sm" onclick="printOrderSlip(\'' + r.orderId + '\', \'embroidery\')" style="padding:4px 8px;font-size:0.75rem;">Print</button>' +
@@ -744,14 +767,20 @@ function selectEmbroideryParty(partyName) {
     '<th class="embroidery-th">Order No</th>' +
     '<th class="embroidery-th">Design No</th>' +
     '<th class="embroidery-th">Sent Date</th>' +
-    '<th class="embroidery-th">Sent (F/B/S)</th>' +
-    '<th class="embroidery-th">Returned (F/B/S)</th>' +
+    '<th class="embroidery-th">Sent Front</th>' +
+    '<th class="embroidery-th">Sent Back</th>' +
+    '<th class="embroidery-th">Sent Sleeve</th>' +
+    '<th class="embroidery-th">Ret Front</th>' +
+    '<th class="embroidery-th">Ret Back</th>' +
+    '<th class="embroidery-th">Ret Sleeve</th>' +
+    '<th class="embroidery-th">Total Sent</th>' +
+    '<th class="embroidery-th">Total Ret</th>' +
     '<th class="embroidery-th">Actions</th>' +
     '</tr>' +
     '<tr class="filter-row">' +
     '<th><input type="text" id="emb-filter-orderno" placeholder="Filter..." oninput="filterEmbroideryPartyRows()" style="width:100%;box-sizing:border-box;padding:4px 6px;font-size:0.75rem;border:1px solid #ccc;border-radius:4px;font-weight:normal;color:#333;" /></th>' +
     '<th><input type="text" id="emb-filter-dno" placeholder="Filter..." oninput="filterEmbroideryPartyRows()" style="width:100%;box-sizing:border-box;padding:4px 6px;font-size:0.75rem;border:1px solid #ccc;border-radius:4px;font-weight:normal;color:#333;" /></th>' +
-    '<th></th><th></th><th></th><th></th>' +
+    '<th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th>' +
     '</tr>' +
     '</thead>' +
     '<tbody>' + tableRowsHtml + '</tbody>' +
