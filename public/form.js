@@ -2457,16 +2457,16 @@ function addReadyDesign() {
     '<div class="image-upload-box">' +
     '<label class="upload-label">Design Image</label>' +
     '<div class="drop-zone" id="rdropzone-' + id + '"' +
-    ' ondragover="handleDragOver(event,' + id + ')"' +
-    ' ondragleave="handleDragLeave(event,' + id + ')"' +
-    ' ondrop="handleDrop(event,' + id + ')">' +
+    ' ondragover="handleDragOver(event, \'r' + id + '\')"' +
+    ' ondragleave="handleDragLeave(event, \'r' + id + '\')"' +
+    ' ondrop="handleDrop(event, \'r' + id + '\')">' +
     '<span class="drop-icon">&#x1F4F8;</span>' +
     '<span class="drop-text">Click or drag<br>image here</span>' +
     '<input type="file" accept="image/*" id="rimgfile-' + id + '"' +
-    ' onchange="handleImageSelect(this,' + id + ')" />' +
+    ' onchange="handleImageSelect(this, \'r' + id + '\')" />' +
     '</div>' +
     '<button class="remove-img-btn" id="rremoveimg-' + id + '"' +
-    ' onclick="removeImage(' + id + ')">&#x2715; Remove</button>' +
+    ' onclick="removeImage(\'r' + id + '\')">&#x2715; Remove</button>' +
     '</div>' +
 
     '<div class="design-fields">' +
