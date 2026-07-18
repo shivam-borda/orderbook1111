@@ -715,26 +715,17 @@ function selectEmbroideryParty(partyName) {
   var rowId = 'emb-party-row-' + partyName.replace(/\s+/g, '_');
   var activeRow = document.getElementById(rowId);
   if (activeRow) activeRow.classList.add('active');
-  filterEmbroideryPartyRows();
-}
 
-function filterEmbroideryPartyRows() {
   var allRows = getEmbroideryPipeline(cachedOrders);
-  var partyRows = allRows.filter(function (r) { return r.partyName === selectedEmbroideryParty; });
-  var qOrder = document.getElementById('emb-filter-orderno').value.toLowerCase();
-  var qDno = document.getElementById('emb-filter-dno').value.toLowerCase();
-
-  var filtered = partyRows.filter(function(r) {
-    return r.orderNo.toLowerCase().includes(qOrder) && r.dNo.toLowerCase().includes(qDno);
-  });
-
+  var partyRows = allRows.filter(function (r) { return r.partyName === partyName; });
   var detailContainer = document.getElementById('embroidery-detail-container');
-  if (!filtered.length) {
-    detailContainer.innerHTML = '<div class="detail-view-empty">No records found.</div>';
+
+  if (!partyRows.length) {
+    detailContainer.innerHTML = '<div class="detail-view-empty"><span>&#x1F4CB;</span>Select a party to view details</div>';
     return;
   }
 
-  var grouped = groupPartyRows(filtered);
+  var grouped = groupPartyRows(partyRows);
   var groupsHtml = grouped.map(function (g) {
     var rowsHtml = g.rows.map(function (r) {
       return '<tr>' +
@@ -749,7 +740,7 @@ function filterEmbroideryPartyRows() {
         '</tr>';
     }).join('');
 
-    return '<div class="group-card" style="margin-bottom: 20px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); overflow: hidden;">' +
+    return '<div class="group-card" data-orderno="' + g.orderNo + '" data-dno="' + g.dNo + '" style="margin-bottom: 20px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); overflow: hidden;">' +
       '<div style="background: #f8f9fa; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e0e0e0; flex-wrap:wrap; gap:10px;">' +
       '<span style="font-weight: 700; color: var(--secondary); font-size:0.9rem;">Order #' + escHtml(g.orderNo) + ' &mdash; Design: ' + escHtml(g.dNo) + ' <span style="font-weight:400; color:#666; font-size:0.8rem; margin-left:8px;">(' + escHtml(g.date) + ')</span></span>' +
       '<div style="display:flex; gap: 6px;">' +
@@ -778,7 +769,7 @@ function filterEmbroideryPartyRows() {
   detailContainer.innerHTML =
     '<div class="detail-header">' +
     '<div class="detail-title-group">' +
-    '<span class="detail-orderno">' + escHtml(selectedEmbroideryParty) + '</span>' +
+    '<span class="detail-orderno">' + escHtml(partyName) + '</span>' +
     '<span class="detail-meta">Embroidery Job Work Summary</span>' +
     '</div>' +
     '</div>' +
@@ -786,14 +777,27 @@ function filterEmbroideryPartyRows() {
     '<span style="font-size:0.8rem; font-weight:700; color:#555;">Filter registry:</span>' +
     '<div style="display:flex; align-items:center; gap:6px;">' +
     '<label style="font-size:0.75rem; color:#666;">Order No:</label>' +
-    '<input type="text" id="emb-filter-orderno" placeholder="Search..." oninput="filterEmbroideryPartyRows()" value="' + escHtml(qOrder) + '" style="padding:5px 8px; font-size:0.75rem; border:1px solid #ccc; border-radius:4px; width:100px; outline:none;" />' +
+    '<input type="text" id="emb-filter-orderno" placeholder="Search..." oninput="filterEmbroideryPartyRows()" style="padding:5px 8px; font-size:0.75rem; border:1px solid #ccc; border-radius:4px; width:100px; outline:none;" />' +
     '</div>' +
     '<div style="display:flex; align-items:center; gap:6px;">' +
     '<label style="font-size:0.75rem; color:#666;">Design No:</label>' +
-    '<input type="text" id="emb-filter-dno" placeholder="Search..." oninput="filterEmbroideryPartyRows()" value="' + escHtml(qDno) + '" style="padding:5px 8px; font-size:0.75rem; border:1px solid #ccc; border-radius:4px; width:100px; outline:none;" />' +
+    '<input type="text" id="emb-filter-dno" placeholder="Search..." oninput="filterEmbroideryPartyRows()" style="padding:5px 8px; font-size:0.75rem; border:1px solid #ccc; border-radius:4px; width:100px; outline:none;" />' +
     '</div>' +
     '</div>' +
     '<div class="detail-body" style="padding:16px;">' + groupsHtml + '</div>';
+}
+
+function filterEmbroideryPartyRows() {
+  var orderVal = document.getElementById('emb-filter-orderno').value.trim().toLowerCase();
+  var dnoVal = document.getElementById('emb-filter-dno').value.trim().toLowerCase();
+
+  document.querySelectorAll('#embroidery-detail-container .group-card').forEach(function (card) {
+    var orderNo = card.getAttribute('data-orderno') || '';
+    var dNo = card.getAttribute('data-dno') || '';
+    var matchesOrder = !orderVal || orderNo.indexOf(orderVal) !== -1;
+    var matchesDno = !dnoVal || dNo.toLowerCase().indexOf(dnoVal) !== -1;
+    card.style.display = (matchesOrder && matchesDno) ? '' : 'none';
+  });
 }
 
 function filterEmbTable() {
