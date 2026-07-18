@@ -584,25 +584,43 @@ function selectFabricParty(partyName) {
     return;
   }
 
-  var tableRowsHtml = partyRows.map(function (r, idx) {
-    return '<tr>' +
-      '<td>' + escHtml(r.orderNo) + '</td>' +
-      '<td>' + escHtml(r.dNo) + '</td>' +
-      '<td>' + escHtml(r.date) + '</td>' +
-      '<td>' + escHtml(r.fabricName) + '</td>' +
-      '<td>' + escHtml(r.colour) + '</td>' +
-      '<td>' + escHtml(r.workFab) + '</td>' +
-      '<td>' + escHtml(r.plainFab) + '</td>' +
-      '<td>' + escHtml(r.totalFab) + '</td>' +
-      '<td>' + escHtml(r.receivedFab) + '</td>' +
-      '<td>' + escHtml(r.workPcs) + '</td>' +
-      '<td>' +
-      '<div style="display:flex;gap:4px;">' +
-      '<button class="btn btn-outline btn-sm" onclick="printOrderSlip(\'' + r.orderId + '\', \'fabric\')" style="padding:4px 8px;font-size:0.75rem;">Print</button>' +
-      '<button class="btn btn-primary btn-sm" onclick="viewOrderInDashboard(\'' + r.orderId + '\')" style="padding:4px 8px;font-size:0.75rem;">Order</button>' +
+  var grouped = groupPartyRows(partyRows);
+  var groupsHtml = grouped.map(function (g) {
+    var rowsHtml = g.rows.map(function (r) {
+      return '<tr>' +
+        '<td>' + escHtml(r.fabricName) + '</td>' +
+        '<td>' + escHtml(r.colour) + '</td>' +
+        '<td>' + escHtml(r.workFab) + '</td>' +
+        '<td>' + escHtml(r.plainFab) + '</td>' +
+        '<td>' + escHtml(r.totalFab) + '</td>' +
+        '<td>' + escHtml(r.receivedFab) + '</td>' +
+        '<td>' + escHtml(r.workPcs) + '</td>' +
+        '</tr>';
+    }).join('');
+
+    return '<div class="group-card" data-orderno="' + g.orderNo + '" data-dno="' + g.dNo + '" style="margin-bottom: 20px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); overflow: hidden;">' +
+      '<div style="background: #f8f9fa; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e0e0e0; flex-wrap:wrap; gap:10px;">' +
+      '<span style="font-weight: 700; color: var(--primary); font-size:0.9rem;">Order #' + escHtml(g.orderNo) + ' &mdash; Design: ' + escHtml(g.dNo) + ' <span style="font-weight:400; color:#666; font-size:0.8rem; margin-left:8px;">(' + escHtml(g.date) + ')</span></span>' +
+      '<div style="display:flex; gap: 6px;">' +
+      '<button class="btn btn-outline btn-sm" onclick="printOrderSlip(\'' + g.orderId + '\', \'fabric\')" style="padding:4px 8px; font-size:0.75rem;">Print Slip</button>' +
+      '<button class="btn btn-primary btn-sm" onclick="viewOrderInDashboard(\'' + g.orderId + '\')" style="padding:4px 8px; font-size:0.75rem;">View Order</button>' +
       '</div>' +
-      '</td>' +
-      '</tr>';
+      '</div>' +
+      '<div class="table-wrap">' +
+      '<table>' +
+      '<thead><tr>' +
+      '<th class="fabric-th">Fabric Name</th>' +
+      '<th class="fabric-th">Colour</th>' +
+      '<th class="fabric-th">Work Fab</th>' +
+      '<th class="fabric-th">Plain Fab</th>' +
+      '<th class="fabric-th">Total Fab</th>' +
+      '<th class="fabric-th">Received Fab</th>' +
+      '<th class="fabric-th">Work Pcs</th>' +
+      '</tr></thead>' +
+      '<tbody>' + rowsHtml + '</tbody>' +
+      '</table>' +
+      '</div>' +
+      '</div>';
   }).join('');
 
   detailContainer.innerHTML =
@@ -612,35 +630,18 @@ function selectFabricParty(partyName) {
     '<span class="detail-meta">Fabric Allocation Registry Summary</span>' +
     '</div>' +
     '</div>' +
-    '<div class="detail-body">' +
-    '<div class="table-card">' +
-    '<div class="table-wrap">' +
-    '<table>' +
-    '<thead>' +
-    '<tr>' +
-    '<th class="fabric-th">Order No</th>' +
-    '<th class="fabric-th">Design No</th>' +
-    '<th class="fabric-th">Date</th>' +
-    '<th class="fabric-th">Fabric Name</th>' +
-    '<th class="fabric-th">Colour</th>' +
-    '<th class="fabric-th">Work Fab</th>' +
-    '<th class="fabric-th">Plain Fab</th>' +
-    '<th class="fabric-th">Total Fab</th>' +
-    '<th class="fabric-th">Received Fab</th>' +
-    '<th class="fabric-th">Work Pcs</th>' +
-    '<th class="fabric-th">Actions</th>' +
-    '</tr>' +
-    '<tr class="filter-row">' +
-    '<th><input type="text" id="fab-filter-orderno" placeholder="Filter..." oninput="filterFabricPartyRows()" style="width:100%;box-sizing:border-box;padding:4px 6px;font-size:0.75rem;border:1px solid #ccc;border-radius:4px;font-weight:normal;color:#333;" /></th>' +
-    '<th><input type="text" id="fab-filter-dno" placeholder="Filter..." oninput="filterFabricPartyRows()" style="width:100%;box-sizing:border-box;padding:4px 6px;font-size:0.75rem;border:1px solid #ccc;border-radius:4px;font-weight:normal;color:#333;" /></th>' +
-    '<th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th>' +
-    '</tr>' +
-    '</thead>' +
-    '<tbody>' + tableRowsHtml + '</tbody>' +
-    '</table>' +
+    '<div class="party-details-filter-panel" style="padding: 12px 16px; background: #fafafa; border-bottom: 1px solid #e0e0e0; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">' +
+    '<span style="font-size:0.8rem; font-weight:700; color:#555;">Filter registry:</span>' +
+    '<div style="display:flex; align-items:center; gap:6px;">' +
+    '<label style="font-size:0.75rem; color:#666;">Order No:</label>' +
+    '<input type="text" id="fab-filter-orderno" placeholder="Search..." oninput="filterFabricPartyRows()" style="padding:5px 8px; font-size:0.75rem; border:1px solid #ccc; border-radius:4px; width:100px; outline:none;" />' +
+    '</div>' +
+    '<div style="display:flex; align-items:center; gap:6px;">' +
+    '<label style="font-size:0.75rem; color:#666;">Design No:</label>' +
+    '<input type="text" id="fab-filter-dno" placeholder="Search..." oninput="filterFabricPartyRows()" style="padding:5px 8px; font-size:0.75rem; border:1px solid #ccc; border-radius:4px; width:100px; outline:none;" />' +
     '</div>' +
     '</div>' +
-    '</div>';
+    '<div class="detail-body" style="padding:16px;">' + groupsHtml + '</div>';
 }
 
 function filterFabricTable() {
@@ -714,80 +715,85 @@ function selectEmbroideryParty(partyName) {
   var rowId = 'emb-party-row-' + partyName.replace(/\s+/g, '_');
   var activeRow = document.getElementById(rowId);
   if (activeRow) activeRow.classList.add('active');
+  filterEmbroideryPartyRows();
+}
 
+function filterEmbroideryPartyRows() {
   var allRows = getEmbroideryPipeline(cachedOrders);
-  var partyRows = allRows.filter(function (r) { return r.partyName === partyName; });
-  var detailContainer = document.getElementById('embroidery-detail-container');
+  var partyRows = allRows.filter(function (r) { return r.partyName === selectedEmbroideryParty; });
+  var qOrder = document.getElementById('emb-filter-orderno').value.toLowerCase();
+  var qDno = document.getElementById('emb-filter-dno').value.toLowerCase();
 
-  if (!partyRows.length) {
-    detailContainer.innerHTML = '<div class="detail-view-empty"><span>&#x1F4CB;</span>Select a party to view details</div>';
+  var filtered = partyRows.filter(function(r) {
+    return r.orderNo.toLowerCase().includes(qOrder) && r.dNo.toLowerCase().includes(qDno);
+  });
+
+  var detailContainer = document.getElementById('embroidery-detail-container');
+  if (!filtered.length) {
+    detailContainer.innerHTML = '<div class="detail-view-empty">No records found.</div>';
     return;
   }
 
-  var totalSent = partyRows.reduce(function (acc, r) { return acc + (r.totalSent || 0); }, 0);
-  var totalRet = partyRows.reduce(function (acc, r) { return acc + (r.totalReturned || 0); }, 0);
-  var totalBal = totalSent - totalRet;
+  var grouped = groupPartyRows(filtered);
+  var groupsHtml = grouped.map(function (g) {
+    var rowsHtml = g.rows.map(function (r) {
+      return '<tr>' +
+        '<td>' + escHtml(r.sentFront || '') + '</td>' +
+        '<td>' + escHtml(r.sentBack || '') + '</td>' +
+        '<td>' + escHtml(r.sentSleeve || '') + '</td>' +
+        '<td>' + escHtml(r.returnFront || '') + '</td>' +
+        '<td>' + escHtml(r.returnBack || '') + '</td>' +
+        '<td>' + escHtml(r.returnSleeve || '') + '</td>' +
+        '<td>' + (r.totalSent || 0) + ' m</td>' +
+        '<td>' + (r.totalReturned || 0) + ' m</td>' +
+        '</tr>';
+    }).join('');
 
-  var tableRowsHtml = partyRows.map(function (r, idx) {
-    var chipClass = r.status === 'completed' ? 'chip-completed' : 'chip-pending';
-    return '<tr>' +
-      '<td>' + escHtml(r.orderNo) + '</td>' +
-      '<td>' + escHtml(r.dNo) + '</td>' +
-      '<td>' + escHtml(r.rowDate) + '</td>' +
-      '<td>' + escHtml(r.sentFront || '') + '</td>' +
-      '<td>' + escHtml(r.sentBack || '') + '</td>' +
-      '<td>' + escHtml(r.sentSleeve || '') + '</td>' +
-      '<td>' + escHtml(r.returnFront || '') + '</td>' +
-      '<td>' + escHtml(r.returnBack || '') + '</td>' +
-      '<td>' + escHtml(r.returnSleeve || '') + '</td>' +
-      '<td>' + r.totalSent + ' m</td>' +
-      '<td>' + r.totalReturned + ' m</td>' +
-      '<td>' +
-      '<div style="display:flex;gap:4px;">' +
-      '<button class="btn btn-outline btn-sm" onclick="printOrderSlip(\'' + r.orderId + '\', \'embroidery\')" style="padding:4px 8px;font-size:0.75rem;">Print</button>' +
-      '<button class="btn btn-primary btn-sm" onclick="viewOrderInDashboard(\'' + r.orderId + '\')" style="padding:4px 8px;font-size:0.75rem;">Order</button>' +
+    return '<div class="group-card" style="margin-bottom: 20px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); overflow: hidden;">' +
+      '<div style="background: #f8f9fa; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e0e0e0; flex-wrap:wrap; gap:10px;">' +
+      '<span style="font-weight: 700; color: var(--secondary); font-size:0.9rem;">Order #' + escHtml(g.orderNo) + ' &mdash; Design: ' + escHtml(g.dNo) + ' <span style="font-weight:400; color:#666; font-size:0.8rem; margin-left:8px;">(' + escHtml(g.date) + ')</span></span>' +
+      '<div style="display:flex; gap: 6px;">' +
+      '<button class="btn btn-outline btn-sm" onclick="printOrderSlip(\'' + g.orderId + '\', \'embroidery\')" style="padding:4px 8px; font-size:0.75rem;">Print Slip</button>' +
+      '<button class="btn btn-primary btn-sm" onclick="viewOrderInDashboard(\'' + g.orderId + '\')" style="padding:4px 8px; font-size:0.75rem;">View Order</button>' +
       '</div>' +
-      '</td>' +
-      '</tr>';
+      '</div>' +
+      '<div class="table-wrap">' +
+      '<table>' +
+      '<thead><tr>' +
+      '<th class="embroidery-th">Sent Front</th>' +
+      '<th class="embroidery-th">Sent Back</th>' +
+      '<th class="embroidery-th">Sent Sleeve</th>' +
+      '<th class="embroidery-th">Ret Front</th>' +
+      '<th class="embroidery-th">Ret Back</th>' +
+      '<th class="embroidery-th">Ret Sleeve</th>' +
+      '<th class="embroidery-th">Total Sent</th>' +
+      '<th class="embroidery-th">Total Returned</th>' +
+      '</tr></thead>' +
+      '<tbody>' + rowsHtml + '</tbody>' +
+      '</table>' +
+      '</div>' +
+      '</div>';
   }).join('');
 
   detailContainer.innerHTML =
     '<div class="detail-header">' +
     '<div class="detail-title-group">' +
-    '<span class="detail-orderno">' + escHtml(partyName) + '</span>' +
+    '<span class="detail-orderno">' + escHtml(selectedEmbroideryParty) + '</span>' +
     '<span class="detail-meta">Embroidery Job Work Summary</span>' +
     '</div>' +
     '</div>' +
-    '<div class="detail-body">' +
-    '<div class="table-card">' +
-    '<div class="table-wrap">' +
-    '<table>' +
-    '<thead>' +
-    '<tr>' +
-    '<th class="embroidery-th">Order No</th>' +
-    '<th class="embroidery-th">Design No</th>' +
-    '<th class="embroidery-th">Sent Date</th>' +
-    '<th class="embroidery-th">Sent Front</th>' +
-    '<th class="embroidery-th">Sent Back</th>' +
-    '<th class="embroidery-th">Sent Sleeve</th>' +
-    '<th class="embroidery-th">Ret Front</th>' +
-    '<th class="embroidery-th">Ret Back</th>' +
-    '<th class="embroidery-th">Ret Sleeve</th>' +
-    '<th class="embroidery-th">Total Sent</th>' +
-    '<th class="embroidery-th">Total Ret</th>' +
-    '<th class="embroidery-th">Actions</th>' +
-    '</tr>' +
-    '<tr class="filter-row">' +
-    '<th><input type="text" id="emb-filter-orderno" placeholder="Filter..." oninput="filterEmbroideryPartyRows()" style="width:100%;box-sizing:border-box;padding:4px 6px;font-size:0.75rem;border:1px solid #ccc;border-radius:4px;font-weight:normal;color:#333;" /></th>' +
-    '<th><input type="text" id="emb-filter-dno" placeholder="Filter..." oninput="filterEmbroideryPartyRows()" style="width:100%;box-sizing:border-box;padding:4px 6px;font-size:0.75rem;border:1px solid #ccc;border-radius:4px;font-weight:normal;color:#333;" /></th>' +
-    '<th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th>' +
-    '</tr>' +
-    '</thead>' +
-    '<tbody>' + tableRowsHtml + '</tbody>' +
-    '</table>' +
+    '<div class="party-details-filter-panel" style="padding: 12px 16px; background: #fafafa; border-bottom: 1px solid #e0e0e0; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">' +
+    '<span style="font-size:0.8rem; font-weight:700; color:#555;">Filter registry:</span>' +
+    '<div style="display:flex; align-items:center; gap:6px;">' +
+    '<label style="font-size:0.75rem; color:#666;">Order No:</label>' +
+    '<input type="text" id="emb-filter-orderno" placeholder="Search..." oninput="filterEmbroideryPartyRows()" value="' + escHtml(qOrder) + '" style="padding:5px 8px; font-size:0.75rem; border:1px solid #ccc; border-radius:4px; width:100px; outline:none;" />' +
+    '</div>' +
+    '<div style="display:flex; align-items:center; gap:6px;">' +
+    '<label style="font-size:0.75rem; color:#666;">Design No:</label>' +
+    '<input type="text" id="emb-filter-dno" placeholder="Search..." oninput="filterEmbroideryPartyRows()" value="' + escHtml(qDno) + '" style="padding:5px 8px; font-size:0.75rem; border:1px solid #ccc; border-radius:4px; width:100px; outline:none;" />' +
     '</div>' +
     '</div>' +
-    '</div>';
+    '<div class="detail-body" style="padding:16px;">' + groupsHtml + '</div>';
 }
 
 function filterEmbTable() {
@@ -870,27 +876,35 @@ function selectStitchingParty(partyName) {
     return;
   }
 
-  var expected = partyRows.reduce(function (acc, r) { return acc + (r.expectedPcs || 0); }, 0);
-  var received = partyRows.reduce(function (acc, r) { return acc + (r.receivedPcs || 0); }, 0);
-  var balance = expected - received;
-  var pct = expected > 0 ? Math.round((received / expected) * 100) : 0;
+  var grouped = groupPartyRows(partyRows);
+  var groupsHtml = grouped.map(function (g) {
+    var rowsHtml = g.rows.map(function (r) {
+      return '<tr>' +
+        '<td>' + escHtml(r.expectedPcs) + ' pcs</td>' +
+        '<td>' + escHtml(r.receivedPcs) + ' pcs</td>' +
+        '<td>' + r.balance + ' pcs</td>' +
+        '</tr>';
+    }).join('');
 
-  var tableRowsHtml = partyRows.map(function (r, idx) {
-    var chipClass = r.status === 'completed' ? 'chip-completed' : 'chip-pending';
-    return '<tr>' +
-      '<td>' + escHtml(r.orderNo) + '</td>' +
-      '<td>' + escHtml(r.dNo) + '</td>' +
-      '<td>' + escHtml(r.sentDate) + '</td>' +
-      '<td>' + escHtml(r.expectedPcs) + ' pcs</td>' +
-      '<td>' + escHtml(r.receivedPcs) + ' pcs</td>' +
-      '<td>' + r.balance + ' pcs</td>' +
-      '<td>' +
-      '<div style="display:flex;gap:4px;">' +
-      '<button class="btn btn-outline btn-sm" onclick="printOrderSlip(\'' + r.orderId + '\', \'stitch\')" style="padding:4px 8px;font-size:0.75rem;">Print</button>' +
-      '<button class="btn btn-primary btn-sm" onclick="viewOrderInDashboard(\'' + r.orderId + '\')" style="padding:4px 8px;font-size:0.75rem;">Order</button>' +
+    return '<div class="group-card" data-orderno="' + g.orderNo + '" data-dno="' + g.dNo + '" style="margin-bottom: 20px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); overflow: hidden;">' +
+      '<div style="background: #f8f9fa; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e0e0e0; flex-wrap:wrap; gap:10px;">' +
+      '<span style="font-weight: 700; color: var(--teal); font-size:0.9rem;">Order #' + escHtml(g.orderNo) + ' &mdash; Design: ' + escHtml(g.dNo) + ' <span style="font-weight:400; color:#666; font-size:0.8rem; margin-left:8px;">(' + escHtml(g.date) + ')</span></span>' +
+      '<div style="display:flex; gap: 6px;">' +
+      '<button class="btn btn-outline btn-sm" onclick="printOrderSlip(\'' + g.orderId + '\', \'stitch\')" style="padding:4px 8px; font-size:0.75rem;">Print Slip</button>' +
+      '<button class="btn btn-primary btn-sm" onclick="viewOrderInDashboard(\'' + g.orderId + '\')" style="padding:4px 8px; font-size:0.75rem;">View Order</button>' +
       '</div>' +
-      '</td>' +
-      '</tr>';
+      '</div>' +
+      '<div class="table-wrap">' +
+      '<table>' +
+      '<thead><tr>' +
+      '<th class="stitching-th">Expected Pcs</th>' +
+      '<th class="stitching-th">Received Pcs</th>' +
+      '<th class="stitching-th">Balance</th>' +
+      '</tr></thead>' +
+      '<tbody>' + rowsHtml + '</tbody>' +
+      '</table>' +
+      '</div>' +
+      '</div>';
   }).join('');
 
   detailContainer.innerHTML =
@@ -900,31 +914,18 @@ function selectStitchingParty(partyName) {
     '<span class="detail-meta">Stitching Progress Registry Summary</span>' +
     '</div>' +
     '</div>' +
-    '<div class="detail-body">' +
-    '<div class="table-card">' +
-    '<div class="table-wrap">' +
-    '<table>' +
-    '<thead>' +
-    '<tr>' +
-    '<th class="stitching-th">Order No</th>' +
-    '<th class="stitching-th">Design No</th>' +
-    '<th class="stitching-th">Sent Date</th>' +
-    '<th class="stitching-th">Expected Pcs</th>' +
-    '<th class="stitching-th">Received Pcs</th>' +
-    '<th class="stitching-th">Balance</th>' +
-    '<th class="stitching-th">Actions</th>' +
-    '</tr>' +
-    '<tr class="filter-row">' +
-    '<th><input type="text" id="stitch-filter-orderno" placeholder="Filter..." oninput="filterStitchingPartyRows()" style="width:100%;box-sizing:border-box;padding:4px 6px;font-size:0.75rem;border:1px solid #ccc;border-radius:4px;font-weight:normal;color:#333;" /></th>' +
-    '<th><input type="text" id="stitch-filter-dno" placeholder="Filter..." oninput="filterStitchingPartyRows()" style="width:100%;box-sizing:border-box;padding:4px 6px;font-size:0.75rem;border:1px solid #ccc;border-radius:4px;font-weight:normal;color:#333;" /></th>' +
-    '<th></th><th></th><th></th><th></th><th></th>' +
-    '</tr>' +
-    '</thead>' +
-    '<tbody>' + tableRowsHtml + '</tbody>' +
-    '</table>' +
+    '<div class="party-details-filter-panel" style="padding: 12px 16px; background: #fafafa; border-bottom: 1px solid #e0e0e0; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">' +
+    '<span style="font-size:0.8rem; font-weight:700; color:#555;">Filter registry:</span>' +
+    '<div style="display:flex; align-items:center; gap:6px;">' +
+    '<label style="font-size:0.75rem; color:#666;">Order No:</label>' +
+    '<input type="text" id="stitch-filter-orderno" placeholder="Search..." oninput="filterStitchingPartyRows()" style="padding:5px 8px; font-size:0.75rem; border:1px solid #ccc; border-radius:4px; width:100px; outline:none;" />' +
+    '</div>' +
+    '<div style="display:flex; align-items:center; gap:6px;">' +
+    '<label style="font-size:0.75rem; color:#666;">Design No:</label>' +
+    '<input type="text" id="stitch-filter-dno" placeholder="Search..." oninput="filterStitchingPartyRows()" style="padding:5px 8px; font-size:0.75rem; border:1px solid #ccc; border-radius:4px; width:100px; outline:none;" />' +
     '</div>' +
     '</div>' +
-    '</div>';
+    '<div class="detail-body" style="padding:16px;">' + groupsHtml + '</div>';
 }
 
 function filterStitchTable() {
@@ -2262,16 +2263,12 @@ function filterFabricPartyRows() {
   var orderVal = document.getElementById('fab-filter-orderno').value.trim().toLowerCase();
   var dnoVal = document.getElementById('fab-filter-dno').value.trim().toLowerCase();
 
-  document.querySelectorAll('#fabric-detail-container tbody tr').forEach(function (row) {
-    // skip the filter input row if it has class 'filter-row'
-    if (row.classList.contains('filter-row')) return;
-    var orderTd = row.cells[0].textContent.toLowerCase();
-    var dnoTd = row.cells[1].textContent.toLowerCase();
-
-    var matchesOrder = !orderVal || orderTd.indexOf(orderVal) !== -1;
-    var matchesDno = !dnoVal || dnoTd.indexOf(dnoVal) !== -1;
-
-    row.style.display = (matchesOrder && matchesDno) ? '' : 'none';
+  document.querySelectorAll('#fabric-detail-container .group-card').forEach(function (card) {
+    var orderNo = card.getAttribute('data-orderno') || '';
+    var dNo = card.getAttribute('data-dno') || '';
+    var matchesOrder = !orderVal || orderNo.indexOf(orderVal) !== -1;
+    var matchesDno = !dnoVal || dNo.toLowerCase().indexOf(dnoVal) !== -1;
+    card.style.display = (matchesOrder && matchesDno) ? '' : 'none';
   });
 }
 
@@ -2279,15 +2276,12 @@ function filterEmbroideryPartyRows() {
   var orderVal = document.getElementById('emb-filter-orderno').value.trim().toLowerCase();
   var dnoVal = document.getElementById('emb-filter-dno').value.trim().toLowerCase();
 
-  document.querySelectorAll('#embroidery-detail-container tbody tr').forEach(function (row) {
-    if (row.classList.contains('filter-row')) return;
-    var orderTd = row.cells[0].textContent.toLowerCase();
-    var dnoTd = row.cells[1].textContent.toLowerCase();
-
-    var matchesOrder = !orderVal || orderTd.indexOf(orderVal) !== -1;
-    var matchesDno = !dnoVal || dnoTd.indexOf(dnoVal) !== -1;
-
-    row.style.display = (matchesOrder && matchesDno) ? '' : 'none';
+  document.querySelectorAll('#embroidery-detail-container .group-card').forEach(function (card) {
+    var orderNo = card.getAttribute('data-orderno') || '';
+    var dNo = card.getAttribute('data-dno') || '';
+    var matchesOrder = !orderVal || orderNo.indexOf(orderVal) !== -1;
+    var matchesDno = !dnoVal || dNo.toLowerCase().indexOf(dnoVal) !== -1;
+    card.style.display = (matchesOrder && matchesDno) ? '' : 'none';
   });
 }
 
@@ -2295,15 +2289,12 @@ function filterStitchingPartyRows() {
   var orderVal = document.getElementById('stitch-filter-orderno').value.trim().toLowerCase();
   var dnoVal = document.getElementById('stitch-filter-dno').value.trim().toLowerCase();
 
-  document.querySelectorAll('#stitching-detail-container tbody tr').forEach(function (row) {
-    if (row.classList.contains('filter-row')) return;
-    var orderTd = row.cells[0].textContent.toLowerCase();
-    var dnoTd = row.cells[1].textContent.toLowerCase();
-
-    var matchesOrder = !orderVal || orderTd.indexOf(orderVal) !== -1;
-    var matchesDno = !dnoVal || dnoTd.indexOf(dnoVal) !== -1;
-
-    row.style.display = (matchesOrder && matchesDno) ? '' : 'none';
+  document.querySelectorAll('#stitching-detail-container .group-card').forEach(function (card) {
+    var orderNo = card.getAttribute('data-orderno') || '';
+    var dNo = card.getAttribute('data-dno') || '';
+    var matchesOrder = !orderVal || orderNo.indexOf(orderVal) !== -1;
+    var matchesDno = !dnoVal || dNo.toLowerCase().indexOf(dnoVal) !== -1;
+    card.style.display = (matchesOrder && matchesDno) ? '' : 'none';
   });
 }
 
@@ -2369,22 +2360,37 @@ function selectHandworkParty(partyName) {
     return;
   }
 
-  var tableRowsHtml = partyRows.map(function (r, idx) {
-    return '<tr>' +
-      '<td>' + escHtml(r.orderNo) + '</td>' +
-      '<td>' + escHtml(r.dNo) + '</td>' +
-      '<td>' + escHtml(r.sentDate) + '</td>' +
-      '<td>' + escHtml(r.colour) + '</td>' +
-      '<td>' + escHtml(r.expectedPcs) + ' pcs</td>' +
-      '<td>' + escHtml(r.receivedPcs) + ' pcs</td>' +
-      '<td>' + r.balance + ' pcs</td>' +
-      '<td>' +
-      '<div style="display:flex;gap:4px;">' +
-      '<button class="btn btn-outline btn-sm" onclick="printOrderSlip(\'' + r.orderId + '\', \'handwork\')" style="padding:4px 8px;font-size:0.75rem;">Print</button>' +
-      '<button class="btn btn-primary btn-sm" onclick="viewOrderInDashboard(\'' + r.orderId + '\')" style="padding:4px 8px;font-size:0.75rem;">Order</button>' +
+  var grouped = groupPartyRows(partyRows);
+  var groupsHtml = grouped.map(function (g) {
+    var rowsHtml = g.rows.map(function (r) {
+      return '<tr>' +
+        '<td>' + escHtml(r.colour) + '</td>' +
+        '<td>' + escHtml(r.expectedPcs) + ' pcs</td>' +
+        '<td>' + escHtml(r.receivedPcs) + ' pcs</td>' +
+        '<td>' + r.balance + ' pcs</td>' +
+        '</tr>';
+    }).join('');
+
+    return '<div class="group-card" data-orderno="' + g.orderNo + '" data-dno="' + g.dNo + '" style="margin-bottom: 20px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); overflow: hidden;">' +
+      '<div style="background: #f8f9fa; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e0e0e0; flex-wrap:wrap; gap:10px;">' +
+      '<span style="font-weight: 700; color: #c2185b; font-size:0.9rem;">Order #' + escHtml(g.orderNo) + ' &mdash; Design: ' + escHtml(g.dNo) + ' <span style="font-weight:400; color:#666; font-size:0.8rem; margin-left:8px;">(' + escHtml(g.date) + ')</span></span>' +
+      '<div style="display:flex; gap: 6px;">' +
+      '<button class="btn btn-outline btn-sm" onclick="printOrderSlip(\'' + g.orderId + '\', \'handwork\')" style="padding:4px 8px; font-size:0.75rem;">Print Slip</button>' +
+      '<button class="btn btn-primary btn-sm" onclick="viewOrderInDashboard(\'' + g.orderId + '\')" style="padding:4px 8px; font-size:0.75rem;">View Order</button>' +
       '</div>' +
-      '</td>' +
-      '</tr>';
+      '</div>' +
+      '<div class="table-wrap">' +
+      '<table>' +
+      '<thead><tr>' +
+      '<th style="background:#d81b60;color:#fff">Colour</th>' +
+      '<th style="background:#d81b60;color:#fff">Expected Pcs</th>' +
+      '<th style="background:#d81b60;color:#fff">Received Pcs</th>' +
+      '<th style="background:#d81b60;color:#fff">Balance</th>' +
+      '</tr></thead>' +
+      '<tbody>' + rowsHtml + '</tbody>' +
+      '</table>' +
+      '</div>' +
+      '</div>';
   }).join('');
 
   detailContainer.innerHTML =
@@ -2394,32 +2400,18 @@ function selectHandworkParty(partyName) {
     '<span class="detail-meta">Hand Work Progress Registry Summary</span>' +
     '</div>' +
     '</div>' +
-    '<div class="detail-body">' +
-    '<div class="table-card">' +
-    '<div class="table-wrap">' +
-    '<table>' +
-    '<thead>' +
-    '<tr>' +
-    '<th style="background:#d81b60;color:#fff">Order No</th>' +
-    '<th style="background:#d81b60;color:#fff">Design No</th>' +
-    '<th style="background:#d81b60;color:#fff">Sent Date</th>' +
-    '<th style="background:#d81b60;color:#fff">Colour</th>' +
-    '<th style="background:#d81b60;color:#fff">Expected Pcs</th>' +
-    '<th style="background:#d81b60;color:#fff">Received Pcs</th>' +
-    '<th style="background:#d81b60;color:#fff">Balance</th>' +
-    '<th style="background:#d81b60;color:#fff">Actions</th>' +
-    '</tr>' +
-    '<tr class="filter-row">' +
-    '<th><input type="text" id="handwork-filter-orderno" placeholder="Filter..." oninput="filterHandworkPartyRows()" style="width:100%;box-sizing:border-box;padding:4px 6px;font-size:0.75rem;border:1px solid #ccc;border-radius:4px;font-weight:normal;color:#333;" /></th>' +
-    '<th><input type="text" id="handwork-filter-dno" placeholder="Filter..." oninput="filterHandworkPartyRows()" style="width:100%;box-sizing:border-box;padding:4px 6px;font-size:0.75rem;border:1px solid #ccc;border-radius:4px;font-weight:normal;color:#333;" /></th>' +
-    '<th></th><th></th><th></th><th></th><th></th><th></th>' +
-    '</tr>' +
-    '</thead>' +
-    '<tbody>' + tableRowsHtml + '</tbody>' +
-    '</table>' +
+    '<div class="party-details-filter-panel" style="padding: 12px 16px; background: #fafafa; border-bottom: 1px solid #e0e0e0; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">' +
+    '<span style="font-size:0.8rem; font-weight:700; color:#555;">Filter registry:</span>' +
+    '<div style="display:flex; align-items:center; gap:6px;">' +
+    '<label style="font-size:0.75rem; color:#666;">Order No:</label>' +
+    '<input type="text" id="handwork-filter-orderno" placeholder="Search..." oninput="filterHandworkPartyRows()" style="padding:5px 8px; font-size:0.75rem; border:1px solid #ccc; border-radius:4px; width:100px; outline:none;" />' +
+    '</div>' +
+    '<div style="display:flex; align-items:center; gap:6px;">' +
+    '<label style="font-size:0.75rem; color:#666;">Design No:</label>' +
+    '<input type="text" id="handwork-filter-dno" placeholder="Search..." oninput="filterHandworkPartyRows()" style="padding:5px 8px; font-size:0.75rem; border:1px solid #ccc; border-radius:4px; width:100px; outline:none;" />' +
     '</div>' +
     '</div>' +
-    '</div>';
+    '<div class="detail-body" style="padding:16px;">' + groupsHtml + '</div>';
 }
 
 function filterHandworkTable() {
@@ -2441,15 +2433,12 @@ function filterHandworkPartyRows() {
   var orderVal = document.getElementById('handwork-filter-orderno').value.trim().toLowerCase();
   var dnoVal = document.getElementById('handwork-filter-dno').value.trim().toLowerCase();
 
-  document.querySelectorAll('#handwork-detail-container tbody tr').forEach(function (row) {
-    if (row.classList.contains('filter-row')) return;
-    var orderTd = row.cells[0].textContent.toLowerCase();
-    var dnoTd = row.cells[1].textContent.toLowerCase();
-
-    var matchesOrder = !orderVal || orderTd.indexOf(orderVal) !== -1;
-    var matchesDno = !dnoVal || dnoTd.indexOf(dnoVal) !== -1;
-
-    row.style.display = (matchesOrder && matchesDno) ? '' : 'none';
+  document.querySelectorAll('#handwork-detail-container .group-card').forEach(function (card) {
+    var orderNo = card.getAttribute('data-orderno') || '';
+    var dNo = card.getAttribute('data-dno') || '';
+    var matchesOrder = !orderVal || orderNo.indexOf(orderVal) !== -1;
+    var matchesDno = !dnoVal || dNo.toLowerCase().indexOf(dnoVal) !== -1;
+    card.style.display = (matchesOrder && matchesDno) ? '' : 'none';
   });
 }
 
@@ -2775,5 +2764,25 @@ async function submitReadyOrder() {
       }
     }
   }
+}
+
+function groupPartyRows(partyRows) {
+  var groups = {};
+  var groupKeys = [];
+  partyRows.forEach(function (r) {
+    var key = r.orderNo + '_' + r.dNo;
+    if (!groups[key]) {
+      groups[key] = {
+        orderNo: String(r.orderNo),
+        dNo: String(r.dNo),
+        orderId: r.orderId,
+        date: r.date || r.rowDate || '',
+        rows: []
+      };
+      groupKeys.push(key);
+    }
+    groups[key].rows.push(r);
+  });
+  return groupKeys.map(function (k) { return groups[k]; });
 }
 
