@@ -2787,6 +2787,7 @@ function groupPartyRows(partyRows) {
     }
     groups[key].rows.push(r);
   });
+  return groupKeys.map(function (k) { return groups[k]; });
 }
 // Force rebuild on Vercel v2.
 
