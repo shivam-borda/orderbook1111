@@ -12,6 +12,7 @@ var stitchCounters = {};
 var activeTab = 'dashboard';
 var cachedOrders = [];
 var currentEditId = null;
+var currentEditType = null; // 'pipeline' | 'ready'
 
 // Searchable Dropdowns State
 var dropdowns = {};
@@ -1888,64 +1889,164 @@ async function editRecord(recordId) {
   try {
     var order = await loadOrder(recordId);
 
-    // Setup tabs
-    activeTab = 'new-order';
+    if (order.type === 'ready') {
+      // ── Open Ready Order form for editing ──
+      currentEditId = recordId;
+      currentEditType = 'ready';
 
-    document.querySelectorAll('.sidebar-nav .nav-item').forEach(function (btn) {
-      btn.classList.remove('active');
-    });
-    var activeBtn = document.getElementById('nav-new-order');
-    if (activeBtn) activeBtn.classList.add('active');
+      activeTab = 'ready-order';
+      document.querySelectorAll('.sidebar-nav .nav-item').forEach(function (btn) {
+        btn.classList.remove('active');
+      });
+      var activeBtn = document.getElementById('nav-ready-order');
+      if (activeBtn) activeBtn.classList.add('active');
 
-    document.querySelectorAll('.tab-content').forEach(function (section) {
-      section.classList.remove('active');
-    });
-    var activeSection = document.getElementById('tab-new-order');
-    if (activeSection) activeSection.classList.add('active');
+      document.querySelectorAll('.tab-content').forEach(function (section) {
+        section.classList.remove('active');
+      });
+      var activeSection = document.getElementById('tab-ready-order');
+      if (activeSection) activeSection.classList.add('active');
 
-    // Hide design card adder button in edit mode
-    var addBtnExist = document.getElementById('btn-more-designs');
-    if (addBtnExist) addBtnExist.remove();
+      // Reset ready form and fill with existing data
+      var container = document.getElementById('ready-order-container');
+      container.innerHTML = '';
+      readyDesignCount = 0;
+      readyFabricCounters = {};
+      readyStitchCounters = {};
 
-    // Set headers
-    document.getElementById('form-tab-title').textContent = 'Edit Order';
-    document.getElementById('btn-cancel-edit').style.display = 'inline-block';
-    document.getElementById('edit-mode-banner').style.display = 'block';
-    document.getElementById('form-print-section').style.display = 'block';
+      // Hide the "Add another design" button in edit mode
+      var addReadyBtnExist = document.getElementById('btn-more-ready-designs');
+      if (addReadyBtnExist) addReadyBtnExist.remove();
 
-    var btnSubmit = document.getElementById('submit-btn');
-    btnSubmit.textContent = '✔ Update Record';
-    btnSubmit.style.background = 'var(--warning)';
+      addReadyDesign();
+      var rId = readyDesignCount;
 
-    currentEditId = recordId;
+      // Fill header fields
+      var roEl = document.getElementById('r-orderno-' + rId);
+      if (roEl) roEl.value = order.orderNo || '';
+      var rdnoEl = document.getElementById('r-dno-' + rId);
+      if (rdnoEl) rdnoEl.value = order.dNo || '';
+      var rfabEl = document.getElementById('r-fabric-' + rId);
+      if (rfabEl) rfabEl.value = order.fabric || '';
+      var rdateEl = document.getElementById('r-date-' + rId);
+      if (rdateEl) rdateEl.value = order.date || '';
 
-    // Reset design container
-    document.getElementById('designs-container').innerHTML = '';
-    designCount = 0;
-    fabricCounters = {};
-    embroideryCounters = {};
-    stitchCounters = {};
+      if (order.image) {
+        setDropZoneImage('r' + rId, order.image);
+      }
 
-    addDesign();
-    var blockId = designCount;
+      // Fill Fabric Party Name
+      var fabricRows = order.fabricRows || [];
+      var rpartyEl = document.getElementById('r-party-' + rId);
+      if (rpartyEl && fabricRows.length > 0) rpartyEl.value = fabricRows[0].partyName || '';
 
-    // Fill header fields
-    document.getElementById('orderno-' + blockId).value = order.orderNo || '—';
-    document.getElementById('dno-' + blockId).value = order.dNo || '';
-    document.getElementById('fabric-' + blockId).value = order.fabric || '';
-    document.getElementById('date-' + blockId).value = order.date || '';
+      // Fill Fabric rows
+      document.getElementById('r-fab-tbody-' + rId).innerHTML = '';
+      readyFabricCounters[rId] = 0;
+      fabricRows.forEach(function (r) {
+        addReadyFabricRow(rId);
+        var rowId = readyFabricCounters[rId];
+        var tr = document.getElementById('r-fab-row-' + rId + '-' + rowId);
+        if (tr) {
+          var inputs = tr.querySelectorAll('input');
+          var sel = tr.querySelector('select');
+          if (inputs[0]) inputs[0].value = r.colour || '';
+          if (inputs[1]) inputs[1].value = r.workFab || '';
+          if (inputs[2]) inputs[2].value = r.plainFab || '';
+          if (inputs[3]) inputs[3].value = r.totalFab || '';
+          if (sel) sel.value = r.receivedFab || '';
+        }
+      });
 
-    if (order.image) {
-      setDropZoneImage(blockId, order.image);
+      // Fill Stitch rows
+      var stitchRows = order.stitchRows || [];
+      var rspEl = document.getElementById('r-stitch-party-' + rId);
+      var rsdEl = document.getElementById('r-stitch-date-' + rId);
+      if (rspEl && stitchRows.length > 0) rspEl.value = stitchRows[0].partyName || '';
+      if (rsdEl && stitchRows.length > 0) rsdEl.value = stitchRows[0].sentDate || '';
+
+      document.getElementById('r-stitch-tbody-' + rId).innerHTML = '';
+      readyStitchCounters[rId] = 0;
+      stitchRows.forEach(function (r) {
+        addReadyStitchRow(rId);
+        var rowId = readyStitchCounters[rId];
+        var tr = document.getElementById('r-stitch-row-' + rId + '-' + rowId);
+        if (tr) {
+          var inputs = tr.querySelectorAll('input');
+          if (inputs[0]) inputs[0].value = r.expectedPcs || '';
+          if (inputs[1]) inputs[1].value = r.receivedPcs || '';
+        }
+      });
+
+      // Update submit button to show Update mode
+      var readyBtn = document.getElementById('ready-submit-btn');
+      if (readyBtn) {
+        readyBtn.innerHTML = '✔ Update Ready Order';
+        readyBtn.style.background = 'var(--warning)';
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    } else {
+      // ── Open Pipeline/New Order form for editing ──
+      currentEditId = recordId;
+      currentEditType = 'pipeline';
+
+      activeTab = 'new-order';
+      document.querySelectorAll('.sidebar-nav .nav-item').forEach(function (btn) {
+        btn.classList.remove('active');
+      });
+      var activeBtn = document.getElementById('nav-new-order');
+      if (activeBtn) activeBtn.classList.add('active');
+
+      document.querySelectorAll('.tab-content').forEach(function (section) {
+        section.classList.remove('active');
+      });
+      var activeSection = document.getElementById('tab-new-order');
+      if (activeSection) activeSection.classList.add('active');
+
+      // Hide design card adder button in edit mode
+      var addBtnExist = document.getElementById('btn-more-designs');
+      if (addBtnExist) addBtnExist.remove();
+
+      // Set headers
+      document.getElementById('form-tab-title').textContent = 'Edit Order';
+      document.getElementById('btn-cancel-edit').style.display = 'inline-block';
+      document.getElementById('edit-mode-banner').style.display = 'block';
+      document.getElementById('form-print-section').style.display = 'block';
+
+      var btnSubmit = document.getElementById('submit-btn');
+      btnSubmit.textContent = '✔ Update Record';
+      btnSubmit.style.background = 'var(--warning)';
+
+      // Reset design container
+      document.getElementById('designs-container').innerHTML = '';
+      designCount = 0;
+      fabricCounters = {};
+      embroideryCounters = {};
+      stitchCounters = {};
+
+      addDesign();
+      var blockId = designCount;
+
+      // Fill header fields
+      document.getElementById('orderno-' + blockId).value = order.orderNo || '—';
+      document.getElementById('dno-' + blockId).value = order.dNo || '';
+      document.getElementById('fabric-' + blockId).value = order.fabric || '';
+      document.getElementById('date-' + blockId).value = order.date || '';
+
+      if (order.image) {
+        setDropZoneImage(blockId, order.image);
+      }
+
+      fillRows(blockId, {
+        fabricRows: order.fabricRows || [],
+        embRows: order.embRows || [],
+        stitchRows: order.stitchRows || []
+      });
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-
-    fillRows(blockId, {
-      fabricRows: order.fabricRows || [],
-      embRows: order.embRows || [],
-      stitchRows: order.stitchRows || []
-    });
-
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (e) {
     console.error('Edit record error:', e);
     alert('Error loading record: ' + e.message);
@@ -1955,8 +2056,22 @@ async function editRecord(recordId) {
 }
 
 function cancelEdit() {
-  resetFormToNew();
-  switchTab('dashboard');
+  currentEditId = null;
+  if (currentEditType === 'ready') {
+    currentEditType = null;
+    // Restore the ready submit button
+    var readyBtn = document.getElementById('ready-submit-btn');
+    if (readyBtn) {
+      readyBtn.innerHTML = '&#x2714; Submit Ready Order';
+      readyBtn.style.background = '';
+    }
+    resetReadyForm();
+    switchTab('dashboard');
+  } else {
+    currentEditType = null;
+    resetFormToNew();
+    switchTab('dashboard');
+  }
 }
 
 /* ─────────────────────────────────────────
@@ -2718,18 +2833,10 @@ async function submitReadyOrder() {
   if (loader) loader.style.display = 'flex';
 
   try {
-    var all = await loadAllOrders();
-    var maxOrderNo = 0;
-    all.forEach(function (o) {
-      var num = parseInt(o.orderNo) || 0;
-      if (num > maxOrderNo) maxOrderNo = num;
-    });
-
-    for (var i = 0; i < designs.length; i++) {
-      maxOrderNo++;
-      var d = designs[i];
-      var record = {
-        orderNo: maxOrderNo,
+    if (currentEditId) {
+      // ── Update existing ready order ──
+      var d = designs[0];
+      var updateData = {
         dNo: d.dNo,
         fabric: d.fabric,
         date: d.date,
@@ -2748,14 +2855,52 @@ async function submitReadyOrder() {
           };
         }),
         stitchRows: d.stitchRows,
-        embRows: [],
-        savedAt: new Date().toISOString()
+        embRows: []
       };
-      await saveOrder(record);
+      await updateOrder(currentEditId, updateData);
+      showToast('&#x2714; Ready Order updated successfully!', 'var(--success)');
+      cancelEdit();
+    } else {
+      // ── Save new ready order(s) ──
+      var all = await loadAllOrders();
+      var maxOrderNo = 0;
+      all.forEach(function (o) {
+        var num = parseInt(o.orderNo) || 0;
+        if (num > maxOrderNo) maxOrderNo = num;
+      });
+
+      for (var i = 0; i < designs.length; i++) {
+        maxOrderNo++;
+        var d = designs[i];
+        var record = {
+          orderNo: maxOrderNo,
+          dNo: d.dNo,
+          fabric: d.fabric,
+          date: d.date,
+          image: d.image,
+          type: 'ready',
+          fabricRows: d.fabricRows.map(function (r) {
+            return {
+              partyName: d.partyName,
+              fabricName: d.fabric || 'Ready',
+              colour: r.colour,
+              workFab: r.workFab,
+              plainFab: r.plainFab,
+              totalFab: r.totalFab,
+              receivedFab: r.receivedFab,
+              workPcs: ''
+            };
+          }),
+          stitchRows: d.stitchRows,
+          embRows: [],
+          savedAt: new Date().toISOString()
+        };
+        await saveOrder(record);
+      }
+      showToast('&#x2705; Ready Order submitted!', 'var(--success)');
+      resetReadyForm();
+      switchTab('dashboard');
     }
-    showToast('&#x2705; Ready Order submitted!', 'var(--success)');
-    resetReadyForm();
-    switchTab('dashboard');
   } catch (err) {
     console.error('Ready order save error:', err);
     alert('Error saving ready order: ' + err.message);
