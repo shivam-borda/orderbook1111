@@ -1889,7 +1889,12 @@ async function editRecord(recordId) {
   try {
     var order = await loadOrder(recordId);
 
-    if (order.type === 'ready') {
+    // Detect ready orders: either saved with type='ready' OR party is SHREENATH INDUSTRIES (legacy)
+    var isReadyOrder = order.type === 'ready' ||
+      (order.fabricRows && order.fabricRows.length > 0 &&
+        (order.fabricRows[0].partyName || '').toUpperCase() === 'SHREENATH INDUSTRIES');
+
+    if (isReadyOrder) {
       // ── Open Ready Order form for editing ──
       currentEditId = recordId;
       currentEditType = 'ready';

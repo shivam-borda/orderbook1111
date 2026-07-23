@@ -162,6 +162,7 @@ const server = http.createServer(async (req, res) => {
           fabric: o.fabric,
           date: o.date,
           image: o.image,
+          type: o.type || 'pipeline',
           fabricRows: o.fabric_rows.map(r => ({
             partyName: r.party_name,
             fabricName: r.fabric_name,
@@ -211,6 +212,7 @@ const server = http.createServer(async (req, res) => {
           fabric: data.fabric,
           date: data.date,
           image: data.image,
+          type: data.type || 'pipeline',
           fabricRows: data.fabric_rows.map(r => ({
             partyName: r.party_name,
             fabricName: r.fabric_name,
@@ -253,7 +255,8 @@ const server = http.createServer(async (req, res) => {
             d_no: body.dNo,
             fabric: body.fabric,
             date: body.date,
-            image: body.image
+            image: body.image,
+            type: body.type || 'pipeline'
           }])
           .select()
           .single();
@@ -343,7 +346,8 @@ const server = http.createServer(async (req, res) => {
             d_no: body.dNo,
             fabric: body.fabric,
             date: body.date,
-            image: body.image
+            image: body.image,
+            type: body.type || 'pipeline'
           })
           .eq('id', id);
 
