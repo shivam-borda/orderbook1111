@@ -185,16 +185,24 @@ function filterOrders() {
 
   // Render compact list rows
   masterContainer.innerHTML = results.map(function (order) {
-    return '<div class="master-row-item" id="row-' + order.id + '" onclick="selectOrder(\'' + order.id + '\')">' +
-      '<div class="master-row-top">' +
-      '<span class="master-row-no">Order #' + escHtml(order.orderNo) + '</span>' +
-      '<span class="master-row-date">' + escHtml(order.date) + '</span>' +
-      '</div>' +
-      '<div class="master-row-dno">Design: ' + escHtml(order.dNo) + '</div>' +
-      '<div class="master-row-bottom">' +
-      '<span>Fabric: ' + escHtml(order.fabric || '—') + '</span>' +
-      '</div>' +
-      '</div>';
+    var imgHtml = order.image
+      ? '<img src="' + order.image + '" class="master-row-thumb" alt="Design" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'" />' +
+        '<div class="master-row-thumb-placeholder" style="display:none;">&#x1F5BC;</div>'
+      : '<div class="master-row-thumb-placeholder">&#x1F5BC;</div>';
+
+    return '<div class="master-row-item" id="row-' + order.id + '" onclick="selectOrder(\'' + order.id + '\')">'
+      + '<div class="master-row-thumb-wrap">' + imgHtml + '</div>'
+      + '<div class="master-row-info">'
+      + '<div class="master-row-top">'
+      + '<span class="master-row-no">Order #' + escHtml(order.orderNo) + '</span>'
+      + '<span class="master-row-date">' + escHtml(order.date) + '</span>'
+      + '</div>'
+      + '<div class="master-row-dno">Design: ' + escHtml(order.dNo) + '</div>'
+      + '<div class="master-row-bottom">'
+      + '<span>Fabric: ' + escHtml(order.fabric || '\u2014') + '</span>'
+      + '</div>'
+      + '</div>'
+      + '</div>';
   }).join('');
 
   // Auto-select first order if previously selected is gone or not selected

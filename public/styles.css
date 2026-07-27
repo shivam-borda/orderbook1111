@@ -1245,13 +1245,14 @@ th.stitching-th { background: var(--teal-light); color: var(--teal); }
 
 /* Master row item styling */
 .master-row-item {
-  padding: 14px 20px;
+  padding: 10px 14px;
   border-bottom: 1px solid #f1f3f7;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
 }
 
 .master-row-item:last-child {
@@ -1297,6 +1298,43 @@ th.stitching-th { background: var(--teal-light); color: var(--teal); }
   justify-content: space-between;
   font-size: 0.78rem;
   color: var(--text-muted);
+}
+
+/* Design image thumbnail in dashboard order list */
+.master-row-thumb-wrap {
+  flex-shrink: 0;
+  width: 54px;
+  height: 54px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e4eaf3;
+  background: #f5f7fa;
+}
+
+.master-row-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.master-row-thumb-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: #c8d3e0;
+  background: #f5f7fa;
+}
+
+.master-row-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 
 /* Detail view pane */
