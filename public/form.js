@@ -226,8 +226,8 @@ function selectOrder(orderId) {
   }
 
   var imgHtml = order.image
-    ? '<div class="order-image-box" style="width:140px;height:140px;margin-bottom:0;"><img src="' + order.image + '" onclick="showImagePreview(\'' + order.image + '\')" /></div>'
-    : '<div class="order-image-box" style="width:140px;height:140px;display:flex;align-items:center;justify-content:center;color:#999;font-size:0.75rem;margin-bottom:0;">No Image</div>';
+    ? '<div class="detail-img-wrap"><img src="' + order.image + '" class="detail-design-img" onclick="showImagePreview(\'' + order.image + '\')" alt="Design" /><span class="detail-img-label">&#x1F50D; Tap to zoom</span></div>'
+    : '<div class="detail-img-wrap detail-img-empty"><span>&#x1F5BC;</span><small>No Image</small></div>';
 
   var fabricRows = (order.fabricRows || [])
     .filter(function (r) { return r.partyName && r.partyName.trim(); })
