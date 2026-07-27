@@ -1957,8 +1957,6 @@ async function editRecord(recordId) {
           var sel = tr.querySelector('select');
           if (inputs[0]) inputs[0].value = r.colour || '';
           if (inputs[1]) inputs[1].value = r.workFab || '';
-          if (inputs[2]) inputs[2].value = r.plainFab || '';
-          if (inputs[3]) inputs[3].value = r.totalFab || '';
           if (sel) sel.value = r.receivedFab || '';
         }
       });
@@ -2678,8 +2676,6 @@ function addReadyDesign() {
     '<th style="background:var(--primary);color:#fff">#</th>' +
     '<th style="background:var(--primary);color:#fff">Color</th>' +
     '<th style="background:var(--primary);color:#fff">Work Fabric</th>' +
-    '<th style="background:var(--primary);color:#fff">Plain Fabric</th>' +
-    '<th style="background:var(--primary);color:#fff">Expected Pcs</th>' +
     '<th style="background:var(--primary);color:#fff">Received</th>' +
     '<th style="background:var(--primary);color:#fff"></th>' +
     '</tr></thead>' +
@@ -2741,8 +2737,6 @@ function addReadyFabricRow(designId) {
     '<td>' + rowId + '</td>' +
     '<td><input type="text" placeholder="Color" /></td>' +
     '<td><input type="text" placeholder="Work Fabric" /></td>' +
-    '<td><input type="text" placeholder="Plain Fabric" /></td>' +
-    '<td><input type="text" placeholder="Expected Pcs" /></td>' +
     '<td>' +
     '<select>' +
     '<option value=""></option>' +
@@ -2795,8 +2789,8 @@ function collectReadyDesigns() {
       fabricRows.push({
         colour: inputs[0] ? inputs[0].value.trim() : '',
         workFab: inputs[1] ? inputs[1].value.trim() : '',
-        plainFab: inputs[2] ? inputs[2].value.trim() : '',
-        totalFab: inputs[3] ? inputs[3].value.trim() : '',
+        plainFab: '',
+        totalFab: '',
         receivedFab: select ? select.value : ''
       });
     });
