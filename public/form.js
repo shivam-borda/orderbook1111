@@ -438,11 +438,14 @@ function renderParties() {
   masterContainer.innerHTML = list.map(function (party) {
     var rowId = 'party-row-' + party.name.replace(/\s+/g, '_');
     return '<div class="master-row-item" id="' + rowId + '" onclick="selectParty(\'' + escHtml(party.name) + '\')">' +
+      '<div class="master-row-thumb-wrap"><div class="master-row-thumb-placeholder" style="background:#e8eaf6;color:var(--primary);font-size:1.3rem;">&#x1F465;</div></div>' +
+      '<div class="master-row-info">' +
       '<div class="master-row-top">' +
-      '<span class="master-row-dno">' + escHtml(party.name) + '</span>' +
+      '<span class="master-row-dno" style="font-size:0.9rem;font-weight:700;">' + escHtml(party.name) + '</span>' +
       '</div>' +
-      '<div class="master-row-bottom" style="margin-top: 4px;">' +
-      '<span>Fabric: ' + party.fabricCount + ' | Embroidery: ' + party.embCount + ' | Stitching: ' + party.stitchCount + '</span>' +
+      '<div class="master-row-bottom">' +
+      '<span>Fab: ' + party.fabricCount + ' | Emb: ' + party.embCount + ' | Stitch: ' + party.stitchCount + '</span>' +
+      '</div>' +
       '</div>' +
       '</div>';
   }).join('');
@@ -557,11 +560,14 @@ function renderFabricParties(parties, allRows) {
     var rowId = 'fabric-party-row-' + party.replace(/\s+/g, '_');
 
     return '<div class="master-row-item" id="' + rowId + '" onclick="selectFabricParty(\'' + escHtml(party) + '\')">' +
+      '<div class="master-row-thumb-wrap"><div class="master-row-thumb-placeholder" style="background:#e0f2f1;color:var(--teal);font-size:1.3rem;">&#x1F9F5;</div></div>' +
+      '<div class="master-row-info">' +
       '<div class="master-row-top">' +
-      '<span class="master-row-dno">' + escHtml(party) + '</span>' +
+      '<span class="master-row-dno" style="font-size:0.9rem;font-weight:700;">' + escHtml(party) + '</span>' +
       '</div>' +
-      '<div class="master-row-bottom" style="font-size:0.75rem;color:var(--primary);margin-top:2px;">' +
+      '<div class="master-row-bottom" style="color:var(--teal);">' +
       '<span>Jobs: ' + partyRows.length + ' | Rec: ' + recFab + ' / ' + totalFab + ' m</span>' +
+      '</div>' +
       '</div>' +
       '</div>';
   }).join('');
@@ -698,11 +704,14 @@ function renderEmbroideryParties(parties, allRows) {
     var rowId = 'emb-party-row-' + party.replace(/\s+/g, '_');
 
     return '<div class="master-row-item" id="' + rowId + '" onclick="selectEmbroideryParty(\'' + escHtml(party) + '\')">' +
+      '<div class="master-row-thumb-wrap"><div class="master-row-thumb-placeholder" style="background:#f3e5f5;color:var(--secondary);font-size:1.3rem;">&#x1FAE7;</div></div>' +
+      '<div class="master-row-info">' +
       '<div class="master-row-top">' +
-      '<span class="master-row-dno">' + escHtml(party) + '</span>' +
+      '<span class="master-row-dno" style="font-size:0.9rem;font-weight:700;">' + escHtml(party) + '</span>' +
       '</div>' +
-      '<div class="master-row-bottom" style="font-size:0.75rem;color:var(--secondary);margin-top:2px;">' +
+      '<div class="master-row-bottom" style="color:var(--secondary);">' +
       '<span>Jobs: ' + partyRows.length + ' | Balance: ' + totalBal + ' m</span>' +
+      '</div>' +
       '</div>' +
       '</div>';
   }).join('');
@@ -853,11 +862,14 @@ function renderStitchingParties(parties, allRows) {
     var rowId = 'stitch-party-row-' + party.replace(/\s+/g, '_');
 
     return '<div class="master-row-item" id="' + rowId + '" onclick="selectStitchingParty(\'' + escHtml(party) + '\')">' +
+      '<div class="master-row-thumb-wrap"><div class="master-row-thumb-placeholder" style="background:#e0f2f1;color:var(--teal);font-size:1.3rem;">&#x2702;&#xFE0F;</div></div>' +
+      '<div class="master-row-info">' +
       '<div class="master-row-top">' +
-      '<span class="master-row-dno">' + escHtml(party) + '</span>' +
+      '<span class="master-row-dno" style="font-size:0.9rem;font-weight:700;">' + escHtml(party) + '</span>' +
       '</div>' +
-      '<div class="master-row-bottom" style="font-size:0.75rem;color:var(--teal);margin-top:2px;">' +
+      '<div class="master-row-bottom" style="color:var(--teal);">' +
       '<span>Jobs: ' + partyRows.length + ' | Progress: ' + pct + '%</span>' +
+      '</div>' +
       '</div>' +
       '</div>';
   }).join('');
@@ -2454,11 +2466,14 @@ function renderHandworkParties(parties, allRows) {
     var rowId = 'handwork-party-row-' + party.replace(/\s+/g, '_');
 
     return '<div class="master-row-item" id="' + rowId + '" onclick="selectHandworkParty(\'' + escHtml(party) + '\')">' +
+      '<div class="master-row-thumb-wrap"><div class="master-row-thumb-placeholder" style="background:#fce4ec;color:#c2185b;font-size:1.3rem;">&#x270B;</div></div>' +
+      '<div class="master-row-info">' +
       '<div class="master-row-top">' +
-      '<span class="master-row-dno">' + escHtml(party) + '</span>' +
+      '<span class="master-row-dno" style="font-size:0.9rem;font-weight:700;">' + escHtml(party) + '</span>' +
       '</div>' +
-      '<div class="master-row-bottom" style="font-size:0.75rem;color:#d81b60;margin-top:2px;">' +
+      '<div class="master-row-bottom" style="color:#c2185b;">' +
       '<span>Jobs: ' + partyRows.length + ' | Progress: ' + pct + '%</span>' +
+      '</div>' +
       '</div>' +
       '</div>';
   }).join('');
