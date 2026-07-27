@@ -1206,10 +1206,10 @@ th.stitching-th { background: var(--teal-light); color: var(--teal); }
    MASTER-DETAIL SPLIT LAYOUT
    ═══════════════════════════════════════════ */
 .split-layout {
-  display: grid;
-  grid-template-columns: 360px 1fr;
-  gap: 24px;
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: stretch;
   margin-top: 10px;
 }
 
@@ -1220,43 +1220,55 @@ th.stitching-th { background: var(--teal-light); color: var(--teal); }
   box-shadow: var(--card-shadow);
   border: 1px solid #eef2f5;
   overflow: hidden;
-  max-height: calc(100vh - 250px);
   display: flex;
   flex-direction: column;
 }
 
 .master-list-header {
-  padding: 16px 20px;
+  padding: 12px 18px;
   background: #fafbfe;
   border-bottom: 1px solid #f0f2f8;
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   color: var(--primary);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .master-list-scroll {
-  overflow-y: auto;
-  flex: 1;
+  display: flex;
+  flex-direction: row;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-wrap: nowrap;
+  gap: 0;
   overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #dde3ef transparent;
+  max-height: 110px;
 }
 
-/* Master row item styling */
+/* Master row item — horizontal card in top strip */
 .master-row-item {
   padding: 10px 14px;
-  border-bottom: 1px solid #f1f3f7;
+  border-right: 1px solid #f1f3f7;
+  border-bottom: none;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  flex-shrink: 0;
+  min-width: 200px;
+  max-width: 260px;
 }
 
 .master-row-item:last-child {
-  border-bottom: none;
+  border-right: none;
 }
 
 .master-row-item:hover {
@@ -1265,8 +1277,8 @@ th.stitching-th { background: var(--teal-light); color: var(--teal); }
 
 .master-row-item.active {
   background: var(--primary-light);
-  border-left: 5px solid var(--primary);
-  padding-left: 15px; /* Offset the 5px border */
+  border-top: 3px solid var(--primary);
+  padding-top: 7px;
 }
 
 .master-row-top {
@@ -1337,7 +1349,7 @@ th.stitching-th { background: var(--teal-light); color: var(--teal); }
   gap: 3px;
 }
 
-/* Detail view pane */
+/* Detail view pane — full width below the list strip */
 .detail-view-pane {
   background: #fff;
   border-radius: 12px;
@@ -1345,9 +1357,10 @@ th.stitching-th { background: var(--teal-light); color: var(--teal); }
   border: 1px solid #eef2f5;
   padding: 24px;
   min-height: 400px;
-  max-height: calc(100vh - 250px);
+  max-height: none;
   overflow-y: auto;
   overscroll-behavior: contain;
+  width: 100%;
 }
 
 .detail-view-empty {
