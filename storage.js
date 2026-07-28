@@ -118,7 +118,7 @@ async function fetchAndCacheOrders(select) {
       var res = await sbFetch('orders?select=' + select + '&order=saved_at.desc');
       if (!res.ok) throw new Error('Failed to load orders');
       var data = await res.json();
-      var mapped = (data || []).map(mapOrder);
+      var mapped = (Array.isArray(data) ? data : []).map(mapOrder);
 
       if (isFull) {
         _cachedOrders = mapped;
@@ -128,7 +128,7 @@ async function fetchAndCacheOrders(select) {
       return mapped;
     } catch (e) {
       console.error('loadAllOrders error:', e);
-      return isFull ? (_cachedOrders || []) : [];
+      return isFull ? (Array.isArray(_cachedOrders) ? _cachedOrders : []) : [];
     } finally {
       if (isFull) _cachedOrdersPromise = null;
     }
@@ -188,6 +188,7 @@ function mapOrder(o) {
     fabric: o.fabric,
     date: o.date,
     image: o.image,
+    type: o.type || 'pipeline',
     fabricRows: (o.fabric_rows || []).map(mapFabricRow),
     embRows: (o.emb_rows || []).map(mapEmbRow),
     stitchRows: (o.stitch_rows || []).map(mapStitchRow),
@@ -350,19 +351,29 @@ async function saveOrder(orderData) {
     orderData.image = await uploadImage(orderData.image, (orderData.dNo || 'order') + '.png');
   }
 
+  var payload = {
+    d_no: orderData.dNo,
+    fabric: orderData.fabric,
+    date: orderData.date,
+    image: orderData.image,
+    type: orderData.type || 'pipeline'
+  };
+  if (orderData.orderNo) {
+    payload.order_no = orderData.orderNo;
+  }
+
   // Insert order
   var res = await sbFetch('orders', {
     method: 'POST',
-    body: {
-      d_no: orderData.dNo,
-      fabric: orderData.fabric,
-      date: orderData.date,
-      image: orderData.image
-    }
+    body: payload
   });
-  if (!res.ok) throw new Error('Failed to save order');
+  if (!res.ok) {
+    var errData = await res.json().catch(function () { return {}; });
+    throw new Error(errData.message || errData.error || 'Failed to save order');
+  }
   var rows = await res.json();
-  var order = rows[0];
+  var order = Array.isArray(rows) ? rows[0] : rows;
+  if (!order || !order.id) throw new Error('Order creation failed: Invalid response');
   var orderId = order.id;
 
   // Insert fabric rows
@@ -456,17 +467,26 @@ async function updateOrder(id, orderData) {
     orderData.image = await uploadImage(orderData.image, (orderData.dNo || 'order') + '.png');
   }
 
+  var updatePayload = {
+    d_no: orderData.dNo,
+    fabric: orderData.fabric,
+    date: orderData.date,
+    image: orderData.image,
+    type: orderData.type || 'pipeline'
+  };
+  if (orderData.orderNo) {
+    updatePayload.order_no = orderData.orderNo;
+  }
+
   // Update order
   var res = await sbFetch('orders?id=eq.' + id, {
     method: 'PATCH',
-    body: {
-      d_no: orderData.dNo,
-      fabric: orderData.fabric,
-      date: orderData.date,
-      image: orderData.image
-    }
+    body: updatePayload
   });
-  if (!res.ok) throw new Error('Failed to update order');
+  if (!res.ok) {
+    var errData = await res.json().catch(function () { return {}; });
+    throw new Error(errData.message || errData.error || 'Failed to update order');
+  }
 
   // Delete old child rows
   await sbFetch('fabric_rows?order_id=eq.' + id, { method: 'DELETE' });

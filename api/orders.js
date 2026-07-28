@@ -58,6 +58,7 @@ module.exports = async (req, res) => {
         fabric: o.fabric,
         date: o.date,
         image: o.image,
+        type: o.type || 'pipeline',
         fabricRows: o.fabric_rows.map(r => ({
           partyName: r.party_name,
           fabricName: r.fabric_name,
@@ -171,14 +172,20 @@ module.exports = async (req, res) => {
     if (req.method === 'POST') {
       const body = req.body;
 
+      const insertObj = {
+        d_no: body.dNo,
+        fabric: body.fabric,
+        date: body.date,
+        image: body.image,
+        type: body.type || 'pipeline'
+      };
+      if (body.orderNo) {
+        insertObj.order_no = body.orderNo;
+      }
+
       const { data: orderData, error: orderError } = await supabase
         .from('orders')
-        .insert([{
-          d_no: body.dNo,
-          fabric: body.fabric,
-          date: body.date,
-          image: body.image
-        }])
+        .insert([insertObj])
         .select()
         .single();
 
@@ -258,14 +265,20 @@ module.exports = async (req, res) => {
     if (req.method === 'PUT' && id) {
       const body = req.body;
 
+      const updateObj = {
+        d_no: body.dNo,
+        fabric: body.fabric,
+        date: body.date,
+        image: body.image,
+        type: body.type || 'pipeline'
+      };
+      if (body.orderNo) {
+        updateObj.order_no = body.orderNo;
+      }
+
       const { error: orderError } = await supabase
         .from('orders')
-        .update({
-          d_no: body.dNo,
-          fabric: body.fabric,
-          date: body.date,
-          image: body.image
-        })
+        .update(updateObj)
         .eq('id', id);
 
       if (orderError) throw orderError;
