@@ -1524,7 +1524,25 @@ function addDesign() {
     (!currentEditId && id > 1 ? '<button class="remove-design-btn" onclick="removeDesign(' + id + ')">&#x1F5D1; Remove Design</button>' : '') +
     '</div>' +
 
+    /* ── Section Selector Checklist ── */
+    '<div class="section-selector-bar" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;margin:12px 0 16px 0;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">' +
+    '<span style="font-weight:600;font-size:0.85rem;color:var(--text-color);">&#x2611; Select Sections to Include:</span>' +
+    '<label style="display:flex;align-items:center;gap:6px;font-weight:600;font-size:0.82rem;cursor:pointer;color:var(--primary);">' +
+    '<input type="checkbox" id="chk-fab-' + id + '" checked onchange="toggleFormSection(' + id + ', \'fab\')" /> &#x1F9F5; Fabric Order' +
+    '</label>' +
+    '<label style="display:flex;align-items:center;gap:6px;font-weight:600;font-size:0.82rem;cursor:pointer;color:#d81b60;">' +
+    '<input type="checkbox" id="chk-hand-' + id + '" checked onchange="toggleFormSection(' + id + ', \'hand\')" /> &#x270B; Hand Work' +
+    '</label>' +
+    '<label style="display:flex;align-items:center;gap:6px;font-weight:600;font-size:0.82rem;cursor:pointer;color:var(--secondary);">' +
+    '<input type="checkbox" id="chk-emb-' + id + '" checked onchange="toggleFormSection(' + id + ', \'emb\')" /> &#x1FAE7; Embroidery' +
+    '</label>' +
+    '<label style="display:flex;align-items:center;gap:6px;font-weight:600;font-size:0.82rem;cursor:pointer;color:var(--teal);">' +
+    '<input type="checkbox" id="chk-stitch-' + id + '" checked onchange="toggleFormSection(' + id + ', \'stitch\')" /> &#x2702;&#xFE0F; Stitching' +
+    '</label>' +
+    '</div>' +
+
     /* SECTION 1 — FABRIC ORDER DETAILS */
+    '<div id="section-wrap-fab-' + id + '">' +
     sectionHeader('&#x1F9F5;', 'Fabric Order Details', 'var(--primary)') +
     '<div class="pipeline-box" style="border-color:var(--primary);">' +
     '<div style="display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap;">' +
@@ -1553,8 +1571,10 @@ function addDesign() {
     '<button class="btn-add-row btn-add-fabric" onclick="addFabricRow(' + id + ')">+ Add Fabric Row</button>' +
     '</div>' +
     '</div>' +
+    '</div>' +
 
     /* SECTION 1.5 — HAND WORK PIPELINE */
+    '<div id="section-wrap-hand-' + id + '">' +
     sectionHeader('&#x270B;', 'Hand Work Job Work', '#d81b60') +
     '<div class="pipeline-box" style="border-color:#d81b60;">' +
     '<div style="display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap;">' +
@@ -1583,8 +1603,10 @@ function addDesign() {
     '<button class="btn-add-row btn-add-handwork" style="background:#fce4ec;color:#c2185b;border-color:#f8bbd0;" onclick="addHandworkRow(' + id + ')">+ Add Hand Work Row</button>' +
     '</div>' +
     '</div>' +
+    '</div>' +
 
     /* SECTION 2 — EMBROIDERY PIPELINE */
+    '<div id="section-wrap-emb-' + id + '">' +
     sectionHeader('&#x1FAE7;', 'Embroidery Job Work', 'var(--secondary)') +
     '<div class="pipeline-box" style="border-color:var(--secondary);">' +
     '<div style="display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap;">' +
@@ -1622,8 +1644,10 @@ function addDesign() {
     '<button class="btn-add-row btn-add-emb" onclick="addEmbroideryRow(' + id + ')">+ Add Embroidery Row</button>' +
     '</div>' +
     '</div>' +
+    '</div>' +
 
     /* SECTION 3 — STITCHING PIPELINE */
+    '<div id="section-wrap-stitch-' + id + '">' +
     sectionHeader('&#x2702;&#xFE0F;', 'Stitching Job Work', 'var(--teal)') +
     '<div class="pipeline-box" style="border-color:var(--teal);">' +
     '<div style="display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap;">' +
@@ -1650,7 +1674,8 @@ function addDesign() {
     '<div class="btn-row">' +
     '<button class="btn-add-row btn-add-stitch" onclick="addStitchRow(' + id + ')">+ Add Stitch Row</button>' +
     '</div>' +
-    '</div>';
+    '</div>' +
+    '</div>';;
 
   container.appendChild(block);
 
@@ -1774,74 +1799,98 @@ function addHandworkRow(designId) {
   tbody.appendChild(tr);
 }
 
+function toggleFormSection(designId, secKey) {
+  var chk = document.getElementById('chk-' + secKey + '-' + designId);
+  var wrap = document.getElementById('section-wrap-' + secKey + '-' + designId);
+  if (wrap && chk) {
+    wrap.style.display = chk.checked ? 'block' : 'none';
+  }
+}
+
+function isSectionVisible(designId, secKey) {
+  var chk = document.getElementById('chk-' + secKey + '-' + designId);
+  var wrap = document.getElementById('section-wrap-' + secKey + '-' + designId);
+  if (chk && !chk.checked) return false;
+  if (wrap && wrap.style.display === 'none') return false;
+  return true;
+}
+
 function collectRows(blockId) {
   var fabricParty = document.getElementById('fabric-party-' + blockId) ? document.getElementById('fabric-party-' + blockId).value : '';
   var fabricRows = [];
-  document.querySelectorAll('#fabric-tbody-' + blockId + ' tr').forEach(function (row) {
-    var inp = row.querySelectorAll('input');
-    if (fabricParty.trim()) {
-      fabricRows.push({
-        partyName: fabricParty,
-        fabricName: inp[0] ? inp[0].value : '',
-        colour: inp[1] ? inp[1].value : '',
-        workFab: inp[2] ? inp[2].value : '',
-        plainFab: inp[3] ? inp[3].value : '',
-        totalFab: inp[4] ? inp[4].value : '',
-        receivedFab: inp[5] ? inp[5].value : '',
-        workPcs: inp[6] ? inp[6].value : ''
-      });
-    }
-  });
+  if (isSectionVisible(blockId, 'fab')) {
+    document.querySelectorAll('#fabric-tbody-' + blockId + ' tr').forEach(function (row) {
+      var inp = row.querySelectorAll('input');
+      if (fabricParty.trim()) {
+        fabricRows.push({
+          partyName: fabricParty,
+          fabricName: inp[0] ? inp[0].value : '',
+          colour: inp[1] ? inp[1].value : '',
+          workFab: inp[2] ? inp[2].value : '',
+          plainFab: inp[3] ? inp[3].value : '',
+          totalFab: inp[4] ? inp[4].value : '',
+          receivedFab: inp[5] ? inp[5].value : '',
+          workPcs: inp[6] ? inp[6].value : ''
+        });
+      }
+    });
+  }
 
   var handworkParty = document.getElementById('handwork-party-' + blockId) ? document.getElementById('handwork-party-' + blockId).value : '';
   var handworkDate = document.getElementById('handwork-date-' + blockId) ? document.getElementById('handwork-date-' + blockId).value : '';
   var handworkRows = [];
-  document.querySelectorAll('#handwork-tbody-' + blockId + ' tr').forEach(function (row) {
-    var inp = row.querySelectorAll('input');
-    if (handworkParty.trim()) {
-      handworkRows.push({
-        partyName: handworkParty,
-        sentDate: handworkDate,
-        colour: inp[0] ? inp[0].value : '',
-        expectedPcs: inp[1] ? inp[1].value : '',
-        receivedPcs: inp[2] ? inp[2].value : ''
-      });
-    }
-  });
+  if (isSectionVisible(blockId, 'hand')) {
+    document.querySelectorAll('#handwork-tbody-' + blockId + ' tr').forEach(function (row) {
+      var inp = row.querySelectorAll('input');
+      if (handworkParty.trim()) {
+        handworkRows.push({
+          partyName: handworkParty,
+          sentDate: handworkDate,
+          colour: inp[0] ? inp[0].value : '',
+          expectedPcs: inp[1] ? inp[1].value : '',
+          receivedPcs: inp[2] ? inp[2].value : ''
+        });
+      }
+    });
+  }
 
   var embParty = document.getElementById('emb-party-' + blockId) ? document.getElementById('emb-party-' + blockId).value : '';
   var embDate = document.getElementById('emb-date-' + blockId) ? document.getElementById('emb-date-' + blockId).value : '';
   var embRows = [];
-  document.querySelectorAll('#emb-tbody-' + blockId + ' tr').forEach(function (row) {
-    var inp = row.querySelectorAll('input');
-    if (embParty.trim()) {
-      embRows.push({
-        partyName: embParty,
-        date: embDate,
-        sentFront: inp[0] ? inp[0].value : '',
-        sentBack: inp[1] ? inp[1].value : '',
-        sentSleeve: inp[2] ? inp[2].value : '',
-        returnFront: inp[3] ? inp[3].value : '',
-        returnBack: inp[4] ? inp[4].value : '',
-        returnSleeve: inp[5] ? inp[5].value : ''
-      });
-    }
-  });
+  if (isSectionVisible(blockId, 'emb')) {
+    document.querySelectorAll('#emb-tbody-' + blockId + ' tr').forEach(function (row) {
+      var inp = row.querySelectorAll('input');
+      if (embParty.trim()) {
+        embRows.push({
+          partyName: embParty,
+          date: embDate,
+          sentFront: inp[0] ? inp[0].value : '',
+          sentBack: inp[1] ? inp[1].value : '',
+          sentSleeve: inp[2] ? inp[2].value : '',
+          returnFront: inp[3] ? inp[3].value : '',
+          returnBack: inp[4] ? inp[4].value : '',
+          returnSleeve: inp[5] ? inp[5].value : ''
+        });
+      }
+    });
+  }
 
   var stitchParty = document.getElementById('stitch-party-' + blockId) ? document.getElementById('stitch-party-' + blockId).value : '';
   var stitchDate = document.getElementById('stitch-date-' + blockId) ? document.getElementById('stitch-date-' + blockId).value : '';
   var stitchRows = [];
-  document.querySelectorAll('#stitch-tbody-' + blockId + ' tr').forEach(function (row) {
-    var inp = row.querySelectorAll('input');
-    if (stitchParty.trim()) {
-      stitchRows.push({
-        partyName: stitchParty,
-        sentDate: stitchDate,
-        expectedPcs: inp[0] ? inp[0].value : '',
-        receivedPcs: inp[1] ? inp[1].value : ''
-      });
-    }
-  });
+  if (isSectionVisible(blockId, 'stitch')) {
+    document.querySelectorAll('#stitch-tbody-' + blockId + ' tr').forEach(function (row) {
+      var inp = row.querySelectorAll('input');
+      if (stitchParty.trim()) {
+        stitchRows.push({
+          partyName: stitchParty,
+          sentDate: stitchDate,
+          expectedPcs: inp[0] ? inp[0].value : '',
+          receivedPcs: inp[1] ? inp[1].value : ''
+        });
+      }
+    });
+  }
 
   return { fabricRows: fabricRows, handworkRows: handworkRows, embRows: embRows, stitchRows: stitchRows };
 }
@@ -1851,6 +1900,19 @@ function fillRows(blockId, data) {
   var handworkRows = data.handworkRows || [];
   var embRows = data.embRows || [];
   var stitchRows = data.stitchRows || [];
+
+  // Update section checklist selection when editing an existing order
+  var chkFab = document.getElementById('chk-fab-' + blockId);
+  if (chkFab) { chkFab.checked = fabricRows.length > 0; toggleFormSection(blockId, 'fab'); }
+
+  var chkHand = document.getElementById('chk-hand-' + blockId);
+  if (chkHand) { chkHand.checked = handworkRows.length > 0; toggleFormSection(blockId, 'hand'); }
+
+  var chkEmb = document.getElementById('chk-emb-' + blockId);
+  if (chkEmb) { chkEmb.checked = embRows.length > 0; toggleFormSection(blockId, 'emb'); }
+
+  var chkStitch = document.getElementById('chk-stitch-' + blockId);
+  if (chkStitch) { chkStitch.checked = stitchRows.length > 0; toggleFormSection(blockId, 'stitch'); }
 
   /* Fabric */
   document.getElementById('fabric-tbody-' + blockId).innerHTML = '';
@@ -2815,16 +2877,25 @@ function addReadyDesign() {
       : '') +
     '</div>' +
 
+    /* ── Section Selector Checklist ── */
+    '<div class="section-selector-bar" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;margin:12px 0 16px 0;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">' +
+    '<span style="font-weight:600;font-size:0.85rem;color:var(--text-color);">&#x2611; Select Sections to Include:</span>' +
+    '<label style="display:flex;align-items:center;gap:6px;font-weight:600;font-size:0.82rem;cursor:pointer;color:var(--primary);">' +
+    '<input type="checkbox" id="chk-r-fab-' + id + '" checked onchange="toggleFormSection(' + id + ', \'r-fab\')" /> &#x1F9F5; Fabric Details' +
+    '</label>' +
+    '<label style="display:flex;align-items:center;gap:6px;font-weight:600;font-size:0.82rem;cursor:pointer;color:var(--teal);">' +
+    '<input type="checkbox" id="chk-r-stitch-' + id + '" checked onchange="toggleFormSection(' + id + ', \'r-stitch\')" /> &#x2702;&#xFE0F; Stitching Details' +
+    '</label>' +
+    '</div>' +
 
-    /* ── Fabric Party Name ── */
+    /* ── SECTION A: Fabric Details ── */
+    '<div id="section-wrap-r-fab-' + id + '">' +
     '<div style="display:flex;gap:16px;margin:12px 0;flex-wrap:wrap;">' +
     '<div class="field-group" style="flex:1;min-width:200px;">' +
     '<label>Fabric Party Name</label>' +
     '<input type="text" placeholder="Fabric party name" id="r-party-' + id + '" list="fabric-parties-list" />' +
     '</div>' +
     '</div>' +
-
-    /* ── SECTION A: Fabric Details ── */
     sectionHeader('&#x1F9F5;', 'Fabric Details', 'var(--primary)') +
     '<div class="pipeline-box" style="border-color:var(--primary);">' +
     '<div class="form-table-wrap">' +
@@ -2843,8 +2914,10 @@ function addReadyDesign() {
     '<button class="btn-add-row btn-add-fabric" onclick="addReadyFabricRow(' + id + ')">+ Add Row</button>' +
     '</div>' +
     '</div>' +
+    '</div>' +
 
     /* ── SECTION C: Stitching ── */
+    '<div id="section-wrap-r-stitch-' + id + '">' +
     sectionHeader('&#x2702;&#xFE0F;', 'Stitching', 'var(--teal)') +
     '<div class="pipeline-box" style="border-color:var(--teal);">' +
     '<div style="display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap;">' +
@@ -2870,6 +2943,7 @@ function addReadyDesign() {
     '</div>' +
     '<div class="btn-row">' +
     '<button class="btn-add-row btn-add-stitch" onclick="addReadyStitchRow(' + id + ')">+ Add Stitch Row</button>' +
+    '</div>' +
     '</div>' +
     '</div>';
 
@@ -2940,25 +3014,29 @@ function collectReadyDesigns() {
     var image = imgEl ? imgEl.src : '';
 
     var fabricRows = [];
-    document.querySelectorAll('#r-fab-tbody-' + id + ' tr').forEach(function (row) {
-      var inputs = row.querySelectorAll('input');
-      var select = row.querySelector('select');
-      fabricRows.push({
-        colour: inputs[0] ? inputs[0].value.trim() : '',
-        workFab: inputs[1] ? inputs[1].value.trim() : '',
-        plainFab: '',
-        totalFab: '',
-        receivedFab: select ? select.value : ''
+    if (isSectionVisible(id, 'r-fab')) {
+      document.querySelectorAll('#r-fab-tbody-' + id + ' tr').forEach(function (row) {
+        var inputs = row.querySelectorAll('input');
+        var select = row.querySelector('select');
+        fabricRows.push({
+          colour: inputs[0] ? inputs[0].value.trim() : '',
+          workFab: inputs[1] ? inputs[1].value.trim() : '',
+          plainFab: '',
+          totalFab: '',
+          receivedFab: select ? select.value : ''
+        });
       });
-    });
+    }
 
     var stitchParty = val('r-stitch-party-' + id);
     var stitchDate = val('r-stitch-date-' + id);
     var stitchRows = [];
-    document.querySelectorAll('#r-stitch-tbody-' + id + ' tr').forEach(function (row) {
-      var inp = row.querySelectorAll('input');
-      stitchRows.push({ partyName: stitchParty, sentDate: stitchDate, expectedPcs: inp[0] ? inp[0].value : '', receivedPcs: inp[1] ? inp[1].value : '' });
-    });
+    if (isSectionVisible(id, 'r-stitch')) {
+      document.querySelectorAll('#r-stitch-tbody-' + id + ' tr').forEach(function (row) {
+        var inp = row.querySelectorAll('input');
+        stitchRows.push({ partyName: stitchParty, sentDate: stitchDate, expectedPcs: inp[0] ? inp[0].value : '', receivedPcs: inp[1] ? inp[1].value : '' });
+      });
+    }
 
     designs.push({ partyName: partyName, stitchParty: stitchParty, dNo: dNo, fabric: fabric, date: date, image: image, fabricRows: fabricRows, stitchRows: stitchRows });
   });
