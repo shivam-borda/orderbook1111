@@ -172,6 +172,24 @@ function filterOrders() {
     return true;
   });
 
+  // Sort orders: Open first, Completed second, Closed last
+  var getStatusWeight = function (status) {
+    if (status === 'closed') return 2;
+    if (status === 'completed') return 1;
+    return 0; // 'open' or default
+  };
+
+  results.sort(function (a, b) {
+    var weightA = getStatusWeight(a.status);
+    var weightB = getStatusWeight(b.status);
+    if (weightA !== weightB) {
+      return weightA - weightB;
+    }
+    var numA = parseInt(a.orderNo) || 0;
+    var numB = parseInt(b.orderNo) || 0;
+    return numB - numA;
+  });
+
   document.getElementById('orders-results-title').textContent = 'Orders (' + results.length + ')';
 
   var masterContainer = document.getElementById('master-list-container');
