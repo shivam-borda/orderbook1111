@@ -185,16 +185,25 @@ function filterOrders() {
 
   // Render compact list rows
   masterContainer.innerHTML = results.map(function (order) {
-    var isClosed = order.status === 'closed';
-    var statusBadge = isClosed
-      ? '<span class="status-badge closed" style="background:#ffebee;color:#c62828;padding:1px 5px;border-radius:4px;font-size:0.65rem;font-weight:700;margin-left:4px;">Closed</span>'
-      : '<span class="status-badge open" style="background:#e8f5e9;color:#2e7d32;padding:1px 5px;border-radius:4px;font-size:0.65rem;font-weight:700;margin-left:4px;">Open</span>';
+    var status = order.status || 'open';
+    var statusBadge = '';
+    var rowClass = '';
+
+    if (status === 'closed') {
+      statusBadge = '<span class="status-badge closed" style="background:#ffebee;color:#c62828;padding:1px 5px;border-radius:4px;font-size:0.65rem;font-weight:700;margin-left:4px;">Closed</span>';
+      rowClass = 'order-closed';
+    } else if (status === 'completed') {
+      statusBadge = '<span class="status-badge completed" style="background:#e0f2f1;color:#00695c;padding:1px 5px;border-radius:4px;font-size:0.65rem;font-weight:700;margin-left:4px;">Completed</span>';
+      rowClass = 'order-completed';
+    } else {
+      statusBadge = '<span class="status-badge open" style="background:#e8f5e9;color:#2e7d32;padding:1px 5px;border-radius:4px;font-size:0.65rem;font-weight:700;margin-left:4px;">Open</span>';
+    }
 
     var imgHtml = order.image
       ? '<img src="' + order.image + '" class="master-row-thumb" alt="Design" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'" /><div class="master-row-thumb-placeholder" style="display:none;">&#x1F5BC;</div>'
       : '<div class="master-row-thumb-placeholder">&#x1F5BC;</div>';
 
-    return '<div class="master-row-item ' + (isClosed ? 'order-closed' : '') + '" id="row-' + order.id + '" onclick="selectOrder(\'' + order.id + '\')">'
+    return '<div class="master-row-item ' + rowClass + '" id="row-' + order.id + '" onclick="selectOrder(\'' + order.id + '\')">'
       + '<div class="master-row-thumb-wrap">' + imgHtml + '</div>'
       + '<div class="master-row-info">'
       + '<div class="master-row-top">'
@@ -311,9 +320,25 @@ function selectOrder(orderId) {
     }).join('');
 
   var isClosed = order.status === 'closed';
-  var statusToggleBtn = isClosed
-    ? '<button class="btn btn-outline btn-sm" onclick="toggleOrderStatus(\'' + order.id + '\')">&#x21BB; Reopen Order</button>'
-    : '<button class="btn btn-danger btn-sm" style="background:#37474f;border-color:#37474f;color:#fff;" onclick="toggleOrderStatus(\'' + order.id + '\')">&#x1F512; Close Order</button>';
+  var isCompleted = order.status === 'completed';
+
+  var statusToggleBtn = isClosed || isCompleted
+    ? '<button class="btn btn-outline btn-sm" onclick="toggleOrderStatus(\'' + order.id + '\', \'open\')">&#x21BB; Reopen Order</button>'
+    : '<button class="btn btn-danger btn-sm" style="background:#37474f;border-color:#37474f;color:#fff;" onclick="toggleOrderStatus(\'' + order.id + '\', \'closed\')">&#x1F512; Close Order</button>';
+
+  var completedBtn = isCompleted
+    ? '<button class="btn btn-teal btn-sm" disabled style="opacity:0.75;">&#x2714; Completed</button>'
+    : '<button class="btn btn-teal btn-sm" onclick="markOrderCompleted(\'' + order.id + '\')">&#x2714; Completed</button>';
+
+  var statusText = '🟢 Open';
+  var statusStyle = 'color:var(--success);';
+  if (isClosed) {
+    statusText = '🔒 Closed';
+    statusStyle = 'color:var(--danger);';
+  } else if (isCompleted) {
+    statusText = '✅ Completed';
+    statusStyle = 'color:var(--teal);';
+  }
 
   var fabricCard = fabricRows
     ? '<div class="table-card"><div class="table-header-row"><span class="table-title">Fabric Allocations</span><button class="btn btn-primary btn-sm" onclick="printOrderSlip(\'' + order.id + '\', \'fabric\')">&#x1F5A8; Print Fabric</button></div><div class="table-wrap"><table><thead><tr><th class="fabric-th">#</th><th class="fabric-th">Party Name</th><th class="fabric-th">Fabric Name</th><th class="fabric-th">Colour</th><th class="fabric-th">Work Fab</th><th class="fabric-th">Plain Fab</th><th class="fabric-th">Total Fab</th><th class="fabric-th">Received Fab</th><th class="fabric-th">Work Pcs</th></tr></thead><tbody>' + fabricRows + '</tbody></table></div></div>'
@@ -349,7 +374,7 @@ function selectOrder(orderId) {
     '<div class="detail-item"><span class="detail-label">Design No.</span><span class="detail-val" style="font-size:1.15rem;color:var(--primary);">' + escHtml(order.dNo) + '</span></div>' +
     '<div class="detail-item"><span class="detail-label">Fabric Type</span><span class="detail-val">' + escHtml(order.fabric || '—') + '</span></div>' +
     '<div class="detail-item"><span class="detail-label">Order Date</span><span class="detail-val">' + escHtml(order.date) + '</span></div>' +
-    '<div class="detail-item"><span class="detail-label">Status</span><span class="detail-val" style="font-weight:700;' + (isClosed ? 'color:var(--danger);' : 'color:var(--success);') + '">' + (isClosed ? '🔒 Closed' : '🟢 Open') + '</span></div>' +
+    '<div class="detail-item"><span class="detail-label">Status</span><span class="detail-val" style="font-weight:700;' + statusStyle + '">' + statusText + '</span></div>' +
     '</div>' +
     '</div>' +
     '<div class="order-card-detail-tables" style="padding:0;">' +
@@ -359,32 +384,58 @@ function selectOrder(orderId) {
     stitchCard +
     '</div>' +
     '<div style="display:flex;gap:12px;justify-content:flex-end;align-items:center;padding:16px 0 0 0;border-top:1px solid #eee;margin-top:16px;">' +
+    completedBtn +
     statusToggleBtn +
     '</div>' +
     '</div>';
 }
 
-async function toggleOrderStatus(orderId) {
+async function markOrderCompleted(orderId) {
   var order = cachedOrders.find(function (o) { return o.id === orderId; });
   if (!order) return;
 
-  var currentStatus = order.status || 'open';
-  var newStatus = currentStatus === 'closed' ? 'open' : 'closed';
+  var stitchRows = (order.stitchRows || []).filter(function (r) { return r.partyName && r.partyName.trim(); });
+  if (!stitchRows.length) {
+    alert('Cannot complete order: Stitching Progress has no rows for this order.');
+    return;
+  }
 
-  if (newStatus === 'closed') {
-    var validStitchRows = (order.stitchRows || []).filter(function (r) { return r.partyName && r.partyName.trim(); });
-    var hasIncompleteStitching = validStitchRows.some(function (r) {
-      var rec = (r.receivedPcs !== undefined && r.receivedPcs !== null) ? String(r.receivedPcs).trim() : '';
-      return !rec || rec === '0';
-    });
-
-    if (hasIncompleteStitching) {
-      alert('Cannot close Order #' + order.orderNo + '!\nAll Stitching Progress rows must have Received Pcs filled before closing.');
+  for (var i = 0; i < stitchRows.length; i++) {
+    var r = stitchRows[i];
+    var val = r.receivedPcs !== undefined && r.receivedPcs !== null ? r.receivedPcs.toString().trim() : '';
+    if (!val || parseFloat(val) <= 0) {
+      alert('Cannot complete order: Stitching row #' + (i + 1) + ' (' + (r.partyName || 'Party') + ') does not have Received Pcs filled in!');
       return;
     }
   }
 
-  var actionText = newStatus === 'closed' ? 'CLOSE' : 'REOPEN';
+  if (!confirm('Mark Order #' + order.orderNo + ' as COMPLETED?')) return;
+
+  var loader = document.getElementById('page-loader');
+  if (loader) loader.style.display = 'flex';
+
+  try {
+    await updateOrderStatus(orderId, 'completed');
+    order.status = 'completed';
+    showToast('🎉 Order #' + order.orderNo + ' Marked as Completed!', 'var(--teal)');
+    filterOrders();
+    selectOrder(orderId);
+  } catch (err) {
+    alert('Error updating order status: ' + err.message);
+    console.error(err);
+  } finally {
+    if (loader) loader.style.display = 'none';
+  }
+}
+
+async function toggleOrderStatus(orderId, targetStatus) {
+  var order = cachedOrders.find(function (o) { return o.id === orderId; });
+  if (!order) return;
+
+  var currentStatus = order.status || 'open';
+  var newStatus = targetStatus || (currentStatus === 'closed' ? 'open' : 'closed');
+  var actionText = newStatus === 'closed' ? 'CLOSE' : (newStatus === 'open' ? 'REOPEN' : 'UPDATE');
+
   if (!confirm('Are you sure you want to ' + actionText + ' Order #' + order.orderNo + '?')) return;
 
   var loader = document.getElementById('page-loader');
