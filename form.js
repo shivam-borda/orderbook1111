@@ -2197,6 +2197,13 @@ async function editRecord(recordId) {
         }
       });
 
+      // On edit time for ready order: make ALL sections visible and checked
+      var chkRFab = document.getElementById('chk-r-fab-' + rId);
+      if (chkRFab) { chkRFab.checked = true; toggleFormSection(rId, 'r-fab'); }
+
+      var chkRStitch = document.getElementById('chk-r-stitch-' + rId);
+      if (chkRStitch) { chkRStitch.checked = true; toggleFormSection(rId, 'r-stitch'); }
+
       // Update submit button to show Update mode
       var readyBtn = document.getElementById('ready-submit-btn');
       if (readyBtn) {
