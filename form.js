@@ -382,7 +382,7 @@ async function toggleOrderStatus(orderId) {
 
     order.status = newStatus;
     showToast(newStatus === 'closed' ? '🔒 Order #' + order.orderNo + ' Closed' : '🔓 Order #' + order.orderNo + ' Reopened', 'var(--primary)');
-    renderOrders();
+    filterOrders();
     selectOrder(orderId);
   } catch (err) {
     alert('Error updating order status: ' + err.message);

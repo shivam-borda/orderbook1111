@@ -1390,6 +1390,21 @@ th.stitching-th {
   padding-left: 9px;
 }
 
+.master-row-item.order-closed {
+  opacity: 0.55;
+  filter: grayscale(40%);
+  background: #f8fafc;
+}
+
+.master-row-item.order-closed:hover {
+  opacity: 0.85;
+  filter: grayscale(0%);
+}
+
+.master-row-item.order-closed .master-row-no {
+  color: #757575;
+}
+
 .master-row-top {
   display: flex;
   justify-content: space-between;
