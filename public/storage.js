@@ -189,6 +189,7 @@ function mapOrder(o) {
     date: o.date,
     image: o.image,
     type: o.type || 'pipeline',
+    status: o.status || 'open',
     fabricRows: (o.fabric_rows || []).map(mapFabricRow),
     embRows: (o.emb_rows || []).map(mapEmbRow),
     stitchRows: (o.stitch_rows || []).map(mapStitchRow),
@@ -356,7 +357,8 @@ async function saveOrder(orderData) {
     fabric: orderData.fabric,
     date: orderData.date,
     image: orderData.image,
-    type: orderData.type || 'pipeline'
+    type: orderData.type || 'pipeline',
+    status: orderData.status || 'open'
   };
   if (orderData.orderNo) {
     payload.order_no = orderData.orderNo;
@@ -474,6 +476,9 @@ async function updateOrder(id, orderData) {
     image: orderData.image,
     type: orderData.type || 'pipeline'
   };
+  if (orderData.status !== undefined) {
+    updatePayload.status = orderData.status;
+  }
   if (orderData.orderNo) {
     updatePayload.order_no = orderData.orderNo;
   }

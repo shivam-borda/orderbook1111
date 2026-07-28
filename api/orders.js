@@ -59,6 +59,7 @@ module.exports = async (req, res) => {
         date: o.date,
         image: o.image,
         type: o.type || 'pipeline',
+        status: o.status || 'open',
         fabricRows: o.fabric_rows.map(r => ({
           partyName: r.party_name,
           fabricName: r.fabric_name,
@@ -177,7 +178,8 @@ module.exports = async (req, res) => {
         fabric: body.fabric,
         date: body.date,
         image: body.image,
-        type: body.type || 'pipeline'
+        type: body.type || 'pipeline',
+        status: body.status || 'open'
       };
       if (body.orderNo) {
         insertObj.order_no = body.orderNo;
@@ -272,6 +274,9 @@ module.exports = async (req, res) => {
         image: body.image,
         type: body.type || 'pipeline'
       };
+      if (body.status !== undefined) {
+        updateObj.status = body.status;
+      }
       if (body.orderNo) {
         updateObj.order_no = body.orderNo;
       }

@@ -185,15 +185,20 @@ function filterOrders() {
 
   // Render compact list rows
   masterContainer.innerHTML = results.map(function (order) {
+    var isClosed = order.status === 'closed';
+    var statusBadge = isClosed
+      ? '<span class="status-badge closed" style="background:#ffebee;color:#c62828;padding:1px 5px;border-radius:4px;font-size:0.65rem;font-weight:700;margin-left:4px;">Closed</span>'
+      : '<span class="status-badge open" style="background:#e8f5e9;color:#2e7d32;padding:1px 5px;border-radius:4px;font-size:0.65rem;font-weight:700;margin-left:4px;">Open</span>';
+
     var imgHtml = order.image
       ? '<img src="' + order.image + '" class="master-row-thumb" alt="Design" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'" /><div class="master-row-thumb-placeholder" style="display:none;">&#x1F5BC;</div>'
       : '<div class="master-row-thumb-placeholder">&#x1F5BC;</div>';
 
-    return '<div class="master-row-item" id="row-' + order.id + '" onclick="selectOrder(\'' + order.id + '\')">'
+    return '<div class="master-row-item ' + (isClosed ? 'order-closed' : '') + '" id="row-' + order.id + '" onclick="selectOrder(\'' + order.id + '\')">'
       + '<div class="master-row-thumb-wrap">' + imgHtml + '</div>'
       + '<div class="master-row-info">'
       + '<div class="master-row-top">'
-      + '<span class="master-row-no">Order #' + escHtml(order.orderNo) + '</span>'
+      + '<span class="master-row-no">#' + escHtml(order.orderNo) + statusBadge + '</span>'
       + '<span class="master-row-date">' + escHtml(order.date) + '</span>'
       + '</div>'
       + '<div class="master-row-dno">Design: ' + escHtml(order.dNo) + '</div>'
@@ -305,6 +310,27 @@ function selectOrder(orderId) {
         '</tr>';
     }).join('');
 
+  var isClosed = order.status === 'closed';
+  var statusToggleBtn = isClosed
+    ? '<button class="btn btn-outline btn-sm" onclick="toggleOrderStatus(\'' + order.id + '\')">&#x21BB; Reopen Order</button>'
+    : '<button class="btn btn-danger btn-sm" style="background:#37474f;border-color:#37474f;color:#fff;" onclick="toggleOrderStatus(\'' + order.id + '\')">&#x1F512; Close Order</button>';
+
+  var fabricCard = fabricRows
+    ? '<div class="table-card"><div class="table-header-row"><span class="table-title">Fabric Allocations</span><button class="btn btn-primary btn-sm" onclick="printOrderSlip(\'' + order.id + '\', \'fabric\')">&#x1F5A8; Print Fabric</button></div><div class="table-wrap"><table><thead><tr><th class="fabric-th">#</th><th class="fabric-th">Party Name</th><th class="fabric-th">Fabric Name</th><th class="fabric-th">Colour</th><th class="fabric-th">Work Fab</th><th class="fabric-th">Plain Fab</th><th class="fabric-th">Total Fab</th><th class="fabric-th">Received Fab</th><th class="fabric-th">Work Pcs</th></tr></thead><tbody>' + fabricRows + '</tbody></table></div></div>'
+    : '';
+
+  var embCard = embRows
+    ? '<div class="table-card"><div class="table-header-row"><span class="table-title">Embroidery Details</span><button class="btn btn-secondary btn-sm" onclick="printOrderSlip(\'' + order.id + '\', \'embroidery\')">&#x1FAE7; Print Embroidery</button></div><div class="table-wrap"><table><thead><tr><th class="embroidery-th">#</th><th class="embroidery-th">Party</th><th class="embroidery-th">Sent Date</th><th class="embroidery-th">Sent Front</th><th class="embroidery-th">Sent Back</th><th class="embroidery-th">Sent Sleeve</th><th class="embroidery-th">Ret Front</th><th class="embroidery-th">Ret Back</th><th class="embroidery-th">Ret Sleeve</th><th class="embroidery-th">Total Sent</th><th class="embroidery-th">Total Returned</th></tr></thead><tbody>' + embRows + '</tbody></table></div></div>'
+    : '';
+
+  var handworkCard = handworkRows
+    ? '<div class="table-card"><div class="table-header-row"><span class="table-title">Hand Work Details</span><button class="btn btn-sm" style="background:#d81b60;color:#fff;" onclick="printOrderSlip(\'' + order.id + '\', \'handwork\')">&#x1FAE7; Print Hand Work</button></div><div class="table-wrap"><table><thead><tr><th class="handwork-th">#</th><th class="handwork-th">Party</th><th class="handwork-th">Sent Date</th><th class="handwork-th">Colour</th><th class="handwork-th">Expected Pcs</th><th class="handwork-th">Received Pcs</th></tr></thead><tbody>' + handworkRows + '</tbody></table></div></div>'
+    : '';
+
+  var stitchCard = stitchRows
+    ? '<div class="table-card"><div class="table-header-row"><span class="table-title">Stitching Progress</span><button class="btn btn-teal btn-sm" onclick="printOrderSlip(\'' + order.id + '\', \'stitch\')">&#x2702;&#xFE0F; Print Stitching</button></div><div class="table-wrap"><table><thead><tr><th class="stitching-th">#</th><th class="stitching-th">Party</th><th class="stitching-th">Sent Date</th><th class="stitching-th">Expected Pcs</th><th class="stitching-th">Received Pcs</th></tr></thead><tbody>' + stitchRows + '</tbody></table></div></div>'
+    : '';
+
   detailContainer.innerHTML =
     '<div class="detail-header">' +
     '<div class="detail-title-group">' +
@@ -323,21 +349,54 @@ function selectOrder(orderId) {
     '<div class="detail-item"><span class="detail-label">Design No.</span><span class="detail-val" style="font-size:1.15rem;color:var(--primary);">' + escHtml(order.dNo) + '</span></div>' +
     '<div class="detail-item"><span class="detail-label">Fabric Type</span><span class="detail-val">' + escHtml(order.fabric || '—') + '</span></div>' +
     '<div class="detail-item"><span class="detail-label">Order Date</span><span class="detail-val">' + escHtml(order.date) + '</span></div>' +
+    '<div class="detail-item"><span class="detail-label">Status</span><span class="detail-val" style="font-weight:700;' + (isClosed ? 'color:var(--danger);' : 'color:var(--success);') + '">' + (isClosed ? '🔒 Closed' : '🟢 Open') + '</span></div>' +
     '</div>' +
     '</div>' +
     '<div class="order-card-detail-tables" style="padding:0;">' +
-    (fabricRows ? '<div class="table-card"><div class="table-header-row"><span class="table-title">Fabric Allocations</span></div><div class="table-wrap"><table><thead><tr><th class="fabric-th">#</th><th class="fabric-th">Party Name</th><th class="fabric-th">Fabric Name</th><th class="fabric-th">Colour</th><th class="fabric-th">Work Fab</th><th class="fabric-th">Plain Fab</th><th class="fabric-th">Total Fab</th><th class="fabric-th">Received Fab</th><th class="fabric-th">Work Pcs</th></tr></thead><tbody>' + fabricRows + '</tbody></table></div></div>' : '') +
-    (embRows ? '<div class="table-card"><div class="table-header-row"><span class="table-title">Embroidery Details</span></div><div class="table-wrap"><table><thead><tr><th class="embroidery-th">#</th><th class="embroidery-th">Party</th><th class="embroidery-th">Sent Date</th><th class="embroidery-th">Sent Front</th><th class="embroidery-th">Sent Back</th><th class="embroidery-th">Sent Sleeve</th><th class="embroidery-th">Ret Front</th><th class="embroidery-th">Ret Back</th><th class="embroidery-th">Ret Sleeve</th><th class="embroidery-th">Total Sent</th><th class="embroidery-th">Total Returned</th></tr></thead><tbody>' + embRows + '</tbody></table></div></div>' : '') +
-    (handworkRows ? '<div class="table-card"><div class="table-header-row"><span class="table-title">Hand Work Details</span></div><div class="table-wrap"><table><thead><tr><th class="handwork-th">#</th><th class="handwork-th">Party</th><th class="handwork-th">Sent Date</th><th class="handwork-th">Colour</th><th class="handwork-th">Expected Pcs</th><th class="handwork-th">Received Pcs</th></tr></thead><tbody>' + handworkRows + '</tbody></table></div></div>' : '') +
-    (stitchRows ? '<div class="table-card"><div class="table-header-row"><span class="table-title">Stitching Progress</span></div><div class="table-wrap"><table><thead><tr><th class="stitching-th">#</th><th class="stitching-th">Party</th><th class="stitching-th">Sent Date</th><th class="stitching-th">Expected Pcs</th><th class="stitching-th">Received Pcs</th></tr></thead><tbody>' + stitchRows + '</tbody></table></div></div>' : '') +
-    '<div style="display:flex;gap:10px;justify-content:center;padding:10px 0 0 0;" class="order-actions">' +
-    '<button class="btn btn-primary btn-sm" onclick="printOrderSlip(\'' + order.id + '\', \'fabric\')">&#x1F5A8; Print Fabric</button>' +
-    '<button class="btn btn-secondary btn-sm" onclick="printOrderSlip(\'' + order.id + '\', \'embroidery\')">&#x1FAE7; Print Embroidery</button>' +
-    '<button class="btn btn-sm" style="background:#d81b60;color:#fff;" onclick="printOrderSlip(\'' + order.id + '\', \'handwork\')">&#x1FAE7; Print Hand Work</button>' +
-    '<button class="btn btn-teal btn-sm" onclick="printOrderSlip(\'' + order.id + '\', \'stitch\')">&#x2702;&#xFE0F; Print Stitching</button>' +
+    fabricCard +
+    embCard +
+    handworkCard +
+    stitchCard +
     '</div>' +
+    '<div style="display:flex;gap:12px;justify-content:flex-end;align-items:center;padding:16px 0 0 0;border-top:1px solid #eee;margin-top:16px;">' +
+    statusToggleBtn +
     '</div>' +
     '</div>';
+}
+
+async function toggleOrderStatus(orderId) {
+  var order = cachedOrders.find(function (o) { return o.id === orderId; });
+  if (!order) return;
+
+  var currentStatus = order.status || 'open';
+  var newStatus = currentStatus === 'closed' ? 'open' : 'closed';
+  var actionText = newStatus === 'closed' ? 'CLOSE' : 'REOPEN';
+
+  if (!confirm('Are you sure you want to ' + actionText + ' Order #' + order.orderNo + '?')) return;
+
+  var loader = document.getElementById('page-loader');
+  if (loader) loader.style.display = 'flex';
+
+  try {
+    await updateOrder(orderId, {
+      dNo: order.dNo,
+      fabric: order.fabric,
+      date: order.date,
+      image: order.image,
+      type: order.type,
+      status: newStatus
+    });
+
+    order.status = newStatus;
+    showToast(newStatus === 'closed' ? '🔒 Order #' + order.orderNo + ' Closed' : '🔓 Order #' + order.orderNo + ' Reopened', 'var(--primary)');
+    renderOrders();
+    selectOrder(orderId);
+  } catch (err) {
+    alert('Error updating order status: ' + err.message);
+    console.error(err);
+  } finally {
+    if (loader) loader.style.display = 'none';
+  }
 }
 
 function clearFilters() {
