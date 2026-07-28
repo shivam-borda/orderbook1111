@@ -179,7 +179,23 @@ async function loadOrderDetails(id) {
 /* ─────────────────────────────────────────
    MAPPING HELPERS
 ───────────────────────────────────────── */
+function setLocalStatusOverride(id, status) {
+  try {
+    var overrides = JSON.parse(localStorage.getItem('sb_order_status_overrides') || '{}');
+    overrides[id] = status;
+    localStorage.setItem('sb_order_status_overrides', JSON.stringify(overrides));
+  } catch (e) {}
+}
+
+function getLocalStatusOverride(id) {
+  try {
+    var overrides = JSON.parse(localStorage.getItem('sb_order_status_overrides') || '{}');
+    return overrides[id];
+  } catch (e) { return null; }
+}
+
 function mapOrder(o) {
+  var localStatus = getLocalStatusOverride(o.id);
   return {
     id: o.id,
     orderNo: o.order_no,
@@ -189,7 +205,7 @@ function mapOrder(o) {
     date: o.date,
     image: o.image,
     type: o.type || 'pipeline',
-    status: o.status || 'open',
+    status: localStatus || o.status || 'open',
     fabricRows: (o.fabric_rows || []).map(mapFabricRow),
     embRows: (o.emb_rows || []).map(mapEmbRow),
     stitchRows: (o.stitch_rows || []).map(mapStitchRow),
@@ -371,7 +387,20 @@ async function saveOrder(orderData) {
   });
   if (!res.ok) {
     var errData = await res.json().catch(function () { return {}; });
-    throw new Error(errData.message || errData.error || 'Failed to save order');
+    var msg = errData.message || errData.error || '';
+    if (msg.indexOf('status') !== -1 || msg.indexOf('column') !== -1) {
+      delete payload.status;
+      res = await sbFetch('orders', {
+        method: 'POST',
+        body: payload
+      });
+      if (!res.ok) {
+        var errData2 = await res.json().catch(function () { return {}; });
+        throw new Error(errData2.message || errData2.error || 'Failed to save order');
+      }
+    } else {
+      throw new Error(msg || 'Failed to save order');
+    }
   }
   var rows = await res.json();
   var order = Array.isArray(rows) ? rows[0] : rows;
@@ -490,7 +519,21 @@ async function updateOrder(id, orderData) {
   });
   if (!res.ok) {
     var errData = await res.json().catch(function () { return {}; });
-    throw new Error(errData.message || errData.error || 'Failed to update order');
+    var msg = errData.message || errData.error || '';
+    if ((msg.indexOf('status') !== -1 || msg.indexOf('column') !== -1) && orderData.status !== undefined) {
+      setLocalStatusOverride(id, orderData.status);
+      delete updatePayload.status;
+      res = await sbFetch('orders?id=eq.' + id, {
+        method: 'PATCH',
+        body: updatePayload
+      });
+      if (!res.ok) {
+        var errData2 = await res.json().catch(function () { return {}; });
+        throw new Error(errData2.message || errData2.error || 'Failed to update order');
+      }
+    } else {
+      throw new Error(msg || 'Failed to update order');
+    }
   }
 
   // Delete old child rows
