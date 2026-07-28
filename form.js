@@ -378,14 +378,7 @@ async function toggleOrderStatus(orderId) {
   if (loader) loader.style.display = 'flex';
 
   try {
-    await updateOrder(orderId, {
-      dNo: order.dNo,
-      fabric: order.fabric,
-      date: order.date,
-      image: order.image,
-      type: order.type,
-      status: newStatus
-    });
+    await updateOrderStatus(orderId, newStatus);
 
     order.status = newStatus;
     showToast(newStatus === 'closed' ? '🔒 Order #' + order.orderNo + ' Closed' : '🔓 Order #' + order.orderNo + ' Reopened', 'var(--primary)');

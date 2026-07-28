@@ -536,13 +536,15 @@ async function updateOrder(id, orderData) {
     }
   }
 
-  // Delete old child rows
-  await sbFetch('fabric_rows?order_id=eq.' + id, { method: 'DELETE' });
-  await sbFetch('emb_rows?order_id=eq.' + id, { method: 'DELETE' });
-  await sbFetch('stitch_rows?order_id=eq.' + id, { method: 'DELETE' });
-  try {
-    await sbFetch('handwork_rows?order_id=eq.' + id, { method: 'DELETE' });
-  } catch (e) {}
+  // Delete and re-insert old child rows only if child row arrays are explicitly provided
+  if (orderData.fabricRows !== undefined || orderData.embRows !== undefined || orderData.stitchRows !== undefined || orderData.handworkRows !== undefined) {
+    await sbFetch('fabric_rows?order_id=eq.' + id, { method: 'DELETE' });
+    await sbFetch('emb_rows?order_id=eq.' + id, { method: 'DELETE' });
+    await sbFetch('stitch_rows?order_id=eq.' + id, { method: 'DELETE' });
+    try {
+      await sbFetch('handwork_rows?order_id=eq.' + id, { method: 'DELETE' });
+    } catch (e) {}
+  }
 
   // Re-insert fabric rows
   if (orderData.fabricRows && orderData.fabricRows.length > 0) {
@@ -619,6 +621,27 @@ async function updateOrder(id, orderData) {
     } catch (e) {
       console.warn("handwork_rows update failed (table might not exist):", e);
     }
+  }
+}
+
+/* ─────────────────────────────────────────
+   UPDATE ORDER STATUS ONLY
+───────────────────────────────────────── */
+async function updateOrderStatus(id, status) {
+  clearOrdersCache();
+  setLocalStatusOverride(id, status);
+
+  try {
+    var res = await sbFetch('orders?id=eq.' + id, {
+      method: 'PATCH',
+      body: { status: status }
+    });
+    if (!res.ok) {
+      var errData = await res.json().catch(function () { return {}; });
+      console.warn('DB status update notice:', errData.message || errData.error);
+    }
+  } catch (e) {
+    console.warn('DB status update skipped, using local status override:', e);
   }
 }
 
