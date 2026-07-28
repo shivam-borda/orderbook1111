@@ -370,8 +370,21 @@ async function toggleOrderStatus(orderId) {
 
   var currentStatus = order.status || 'open';
   var newStatus = currentStatus === 'closed' ? 'open' : 'closed';
-  var actionText = newStatus === 'closed' ? 'CLOSE' : 'REOPEN';
 
+  if (newStatus === 'closed') {
+    var validStitchRows = (order.stitchRows || []).filter(function (r) { return r.partyName && r.partyName.trim(); });
+    var hasIncompleteStitching = validStitchRows.some(function (r) {
+      var rec = (r.receivedPcs !== undefined && r.receivedPcs !== null) ? String(r.receivedPcs).trim() : '';
+      return !rec || rec === '0';
+    });
+
+    if (hasIncompleteStitching) {
+      alert('Cannot close Order #' + order.orderNo + '!\nAll Stitching Progress rows must have Received Pcs filled before closing.');
+      return;
+    }
+  }
+
+  var actionText = newStatus === 'closed' ? 'CLOSE' : 'REOPEN';
   if (!confirm('Are you sure you want to ' + actionText + ' Order #' + order.orderNo + '?')) return;
 
   var loader = document.getElementById('page-loader');
