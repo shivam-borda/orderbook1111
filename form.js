@@ -1799,7 +1799,7 @@ function removeDesign(id) {
    SUBMIT FORM: CREATE / UPDATE
    ───────────────────────────────────────── */
 async function submitForm() {
-  var designs = document.querySelectorAll('.design-block');
+  var designs = document.querySelectorAll('#designs-container .design-block');
   if (!designs.length) {
     alert('Please add at least one design before submitting.');
     return;
@@ -1808,10 +1808,10 @@ async function submitForm() {
   // Validate Design numbers
   var valid = true;
   designs.forEach(function (block) {
-    var id = block.id.split('-')[1];
+    var id = block.id.replace('design-', '');
     var dno = document.getElementById('dno-' + id);
-    if (!dno.value.trim()) {
-      dno.style.borderColor = 'var(--danger)';
+    if (!dno || !dno.value.trim()) {
+      if (dno) dno.style.borderColor = 'var(--danger)';
       valid = false;
     } else {
       dno.style.borderColor = '';
@@ -1834,14 +1834,14 @@ async function submitForm() {
     if (currentEditId) {
       // ── Update existing ──
       var block = designs[0];
-      var id = block.id.split('-')[1];
+      var id = block.id.replace('design-', '');
       var imgEl = block.querySelector('img.preview-img');
       var data = collectRows(id);
 
       var updateData = {
-        dNo: document.getElementById('dno-' + id).value,
-        fabric: document.getElementById('fabric-' + id).value,
-        date: document.getElementById('date-' + id).value,
+        dNo: val('dno-' + id),
+        fabric: val('fabric-' + id),
+        date: val('date-' + id),
         image: imgEl ? imgEl.src : '',
         fabricRows: data.fabricRows,
         handworkRows: data.handworkRows,
@@ -1857,6 +1857,7 @@ async function submitForm() {
     } else {
       // ── Save multiple new orders ──
       var all = await loadAllOrders();
+      if (!Array.isArray(all)) all = [];
       var maxOrderNo = 0;
       all.forEach(function (o) {
         var num = parseInt(o.orderNo) || 0;
@@ -1866,15 +1867,15 @@ async function submitForm() {
       for (var i = 0; i < designs.length; i++) {
         maxOrderNo++;
         var block = designs[i];
-        var id = block.id.split('-')[1];
+        var id = block.id.replace('design-', '');
         var imgEl = block.querySelector('img.preview-img');
         var data = collectRows(id);
 
         await saveOrder({
           orderNo: maxOrderNo,
-          dNo: document.getElementById('dno-' + id).value,
-          fabric: document.getElementById('fabric-' + id).value,
-          date: document.getElementById('date-' + id).value,
+          dNo: val('dno-' + id),
+          fabric: val('fabric-' + id),
+          date: val('date-' + id),
           image: imgEl ? imgEl.src : '',
           fabricRows: data.fabricRows,
           handworkRows: data.handworkRows,
