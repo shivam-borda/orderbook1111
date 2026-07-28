@@ -1528,21 +1528,21 @@ function addDesign() {
     '<div class="section-selector-bar" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;margin:12px 0 16px 0;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">' +
     '<span style="font-weight:600;font-size:0.85rem;color:var(--text-color);">&#x2611; Select Sections to Include:</span>' +
     '<label style="display:flex;align-items:center;gap:6px;font-weight:600;font-size:0.82rem;cursor:pointer;color:var(--primary);">' +
-    '<input type="checkbox" id="chk-fab-' + id + '" checked onchange="toggleFormSection(' + id + ', \'fab\')" /> &#x1F9F5; Fabric Order' +
+    '<input type="checkbox" id="chk-fab-' + id + '" onchange="toggleFormSection(' + id + ', \'fab\')" /> &#x1F9F5; Fabric Order' +
     '</label>' +
     '<label style="display:flex;align-items:center;gap:6px;font-weight:600;font-size:0.82rem;cursor:pointer;color:#d81b60;">' +
-    '<input type="checkbox" id="chk-hand-' + id + '" checked onchange="toggleFormSection(' + id + ', \'hand\')" /> &#x270B; Hand Work' +
+    '<input type="checkbox" id="chk-hand-' + id + '" onchange="toggleFormSection(' + id + ', \'hand\')" /> &#x270B; Hand Work' +
     '</label>' +
     '<label style="display:flex;align-items:center;gap:6px;font-weight:600;font-size:0.82rem;cursor:pointer;color:var(--secondary);">' +
-    '<input type="checkbox" id="chk-emb-' + id + '" checked onchange="toggleFormSection(' + id + ', \'emb\')" /> &#x1FAE7; Embroidery' +
+    '<input type="checkbox" id="chk-emb-' + id + '" onchange="toggleFormSection(' + id + ', \'emb\')" /> &#x1FAE7; Embroidery' +
     '</label>' +
     '<label style="display:flex;align-items:center;gap:6px;font-weight:600;font-size:0.82rem;cursor:pointer;color:var(--teal);">' +
-    '<input type="checkbox" id="chk-stitch-' + id + '" checked onchange="toggleFormSection(' + id + ', \'stitch\')" /> &#x2702;&#xFE0F; Stitching' +
+    '<input type="checkbox" id="chk-stitch-' + id + '" onchange="toggleFormSection(' + id + ', \'stitch\')" /> &#x2702;&#xFE0F; Stitching' +
     '</label>' +
     '</div>' +
 
     /* SECTION 1 — FABRIC ORDER DETAILS */
-    '<div id="section-wrap-fab-' + id + '">' +
+    '<div id="section-wrap-fab-' + id + '" style="display:none;">' +
     sectionHeader('&#x1F9F5;', 'Fabric Order Details', 'var(--primary)') +
     '<div class="pipeline-box" style="border-color:var(--primary);">' +
     '<div style="display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap;">' +
@@ -1574,7 +1574,7 @@ function addDesign() {
     '</div>' +
 
     /* SECTION 1.5 — HAND WORK PIPELINE */
-    '<div id="section-wrap-hand-' + id + '">' +
+    '<div id="section-wrap-hand-' + id + '" style="display:none;">' +
     sectionHeader('&#x270B;', 'Hand Work Job Work', '#d81b60') +
     '<div class="pipeline-box" style="border-color:#d81b60;">' +
     '<div style="display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap;">' +
@@ -1606,7 +1606,7 @@ function addDesign() {
     '</div>' +
 
     /* SECTION 2 — EMBROIDERY PIPELINE */
-    '<div id="section-wrap-emb-' + id + '">' +
+    '<div id="section-wrap-emb-' + id + '" style="display:none;">' +
     sectionHeader('&#x1FAE7;', 'Embroidery Job Work', 'var(--secondary)') +
     '<div class="pipeline-box" style="border-color:var(--secondary);">' +
     '<div style="display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap;">' +
@@ -1647,7 +1647,7 @@ function addDesign() {
     '</div>' +
 
     /* SECTION 3 — STITCHING PIPELINE */
-    '<div id="section-wrap-stitch-' + id + '">' +
+    '<div id="section-wrap-stitch-' + id + '" style="display:none;">' +
     sectionHeader('&#x2702;&#xFE0F;', 'Stitching Job Work', 'var(--teal)') +
     '<div class="pipeline-box" style="border-color:var(--teal);">' +
     '<div style="display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap;">' +
@@ -2881,15 +2881,15 @@ function addReadyDesign() {
     '<div class="section-selector-bar" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;margin:12px 0 16px 0;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">' +
     '<span style="font-weight:600;font-size:0.85rem;color:var(--text-color);">&#x2611; Select Sections to Include:</span>' +
     '<label style="display:flex;align-items:center;gap:6px;font-weight:600;font-size:0.82rem;cursor:pointer;color:var(--primary);">' +
-    '<input type="checkbox" id="chk-r-fab-' + id + '" checked onchange="toggleFormSection(' + id + ', \'r-fab\')" /> &#x1F9F5; Fabric Details' +
+    '<input type="checkbox" id="chk-r-fab-' + id + '" onchange="toggleFormSection(' + id + ', \'r-fab\')" /> &#x1F9F5; Fabric Details' +
     '</label>' +
     '<label style="display:flex;align-items:center;gap:6px;font-weight:600;font-size:0.82rem;cursor:pointer;color:var(--teal);">' +
-    '<input type="checkbox" id="chk-r-stitch-' + id + '" checked onchange="toggleFormSection(' + id + ', \'r-stitch\')" /> &#x2702;&#xFE0F; Stitching Details' +
+    '<input type="checkbox" id="chk-r-stitch-' + id + '" onchange="toggleFormSection(' + id + ', \'r-stitch\')" /> &#x2702;&#xFE0F; Stitching Details' +
     '</label>' +
     '</div>' +
 
     /* ── SECTION A: Fabric Details ── */
-    '<div id="section-wrap-r-fab-' + id + '">' +
+    '<div id="section-wrap-r-fab-' + id + '" style="display:none;">' +
     '<div style="display:flex;gap:16px;margin:12px 0;flex-wrap:wrap;">' +
     '<div class="field-group" style="flex:1;min-width:200px;">' +
     '<label>Fabric Party Name</label>' +
@@ -2917,7 +2917,7 @@ function addReadyDesign() {
     '</div>' +
 
     /* ── SECTION C: Stitching ── */
-    '<div id="section-wrap-r-stitch-' + id + '">' +
+    '<div id="section-wrap-r-stitch-' + id + '" style="display:none;">' +
     sectionHeader('&#x2702;&#xFE0F;', 'Stitching', 'var(--teal)') +
     '<div class="pipeline-box" style="border-color:var(--teal);">' +
     '<div style="display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap;">' +
