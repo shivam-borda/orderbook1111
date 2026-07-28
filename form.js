@@ -1901,18 +1901,18 @@ function fillRows(blockId, data) {
   var embRows = data.embRows || [];
   var stitchRows = data.stitchRows || [];
 
-  // Update section checklist selection when editing an existing order
+  // On edit time: make ALL sections visible and checked
   var chkFab = document.getElementById('chk-fab-' + blockId);
-  if (chkFab) { chkFab.checked = fabricRows.length > 0; toggleFormSection(blockId, 'fab'); }
+  if (chkFab) { chkFab.checked = true; toggleFormSection(blockId, 'fab'); }
 
   var chkHand = document.getElementById('chk-hand-' + blockId);
-  if (chkHand) { chkHand.checked = handworkRows.length > 0; toggleFormSection(blockId, 'hand'); }
+  if (chkHand) { chkHand.checked = true; toggleFormSection(blockId, 'hand'); }
 
   var chkEmb = document.getElementById('chk-emb-' + blockId);
-  if (chkEmb) { chkEmb.checked = embRows.length > 0; toggleFormSection(blockId, 'emb'); }
+  if (chkEmb) { chkEmb.checked = true; toggleFormSection(blockId, 'emb'); }
 
   var chkStitch = document.getElementById('chk-stitch-' + blockId);
-  if (chkStitch) { chkStitch.checked = stitchRows.length > 0; toggleFormSection(blockId, 'stitch'); }
+  if (chkStitch) { chkStitch.checked = true; toggleFormSection(blockId, 'stitch'); }
 
   /* Fabric */
   document.getElementById('fabric-tbody-' + blockId).innerHTML = '';
