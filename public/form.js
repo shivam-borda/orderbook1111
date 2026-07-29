@@ -1726,6 +1726,8 @@ function resetFormToNew() {
 }
 
 function addFabricRow(designId) {
+  var chk = document.getElementById('chk-fab-' + designId);
+  if (chk && !chk.checked) { chk.checked = true; toggleFormSection(designId, 'fab'); }
   if (!fabricCounters[designId]) fabricCounters[designId] = 0;
   fabricCounters[designId]++;
   var rowId = fabricCounters[designId];
@@ -1747,6 +1749,8 @@ function addFabricRow(designId) {
 }
 
 function addEmbroideryRow(designId) {
+  var chk = document.getElementById('chk-emb-' + designId);
+  if (chk && !chk.checked) { chk.checked = true; toggleFormSection(designId, 'emb'); }
   if (!embroideryCounters[designId]) embroideryCounters[designId] = 0;
   embroideryCounters[designId]++;
   var rowId = embroideryCounters[designId];
@@ -1767,6 +1771,8 @@ function addEmbroideryRow(designId) {
 }
 
 function addStitchRow(designId) {
+  var chk = document.getElementById('chk-stitch-' + designId);
+  if (chk && !chk.checked) { chk.checked = true; toggleFormSection(designId, 'stitch'); }
   if (!stitchCounters[designId]) stitchCounters[designId] = 0;
   stitchCounters[designId]++;
   var rowId = stitchCounters[designId];
@@ -1783,6 +1789,8 @@ function addStitchRow(designId) {
 }
 
 function addHandworkRow(designId) {
+  var chk = document.getElementById('chk-hand-' + designId);
+  if (chk && !chk.checked) { chk.checked = true; toggleFormSection(designId, 'hand'); }
   if (!handworkCounters[designId]) handworkCounters[designId] = 0;
   handworkCounters[designId]++;
   var rowId = handworkCounters[designId];
@@ -1816,81 +1824,95 @@ function isSectionVisible(designId, secKey) {
 }
 
 function collectRows(blockId) {
-  var fabricParty = document.getElementById('fabric-party-' + blockId) ? document.getElementById('fabric-party-' + blockId).value : '';
+  var fabricParty = document.getElementById('fabric-party-' + blockId) ? document.getElementById('fabric-party-' + blockId).value.trim() : '';
   var fabricRows = [];
-  if (isSectionVisible(blockId, 'fab')) {
-    document.querySelectorAll('#fabric-tbody-' + blockId + ' tr').forEach(function (row) {
-      var inp = row.querySelectorAll('input');
-      if (fabricParty.trim()) {
-        fabricRows.push({
-          partyName: fabricParty,
-          fabricName: inp[0] ? inp[0].value : '',
-          colour: inp[1] ? inp[1].value : '',
-          workFab: inp[2] ? inp[2].value : '',
-          plainFab: inp[3] ? inp[3].value : '',
-          totalFab: inp[4] ? inp[4].value : '',
-          receivedFab: inp[5] ? inp[5].value : '',
-          workPcs: inp[6] ? inp[6].value : ''
-        });
-      }
-    });
-  }
+  document.querySelectorAll('#fabric-tbody-' + blockId + ' tr').forEach(function (row) {
+    var inp = row.querySelectorAll('input');
+    var fabricName = inp[0] ? inp[0].value.trim() : '';
+    var colour = inp[1] ? inp[1].value.trim() : '';
+    var workFab = inp[2] ? inp[2].value.trim() : '';
+    var plainFab = inp[3] ? inp[3].value.trim() : '';
+    var totalFab = inp[4] ? inp[4].value.trim() : '';
+    var receivedFab = inp[5] ? inp[5].value.trim() : '';
+    var workPcs = inp[6] ? inp[6].value.trim() : '';
 
-  var handworkParty = document.getElementById('handwork-party-' + blockId) ? document.getElementById('handwork-party-' + blockId).value : '';
+    if (fabricParty || fabricName || colour || workFab || plainFab || totalFab || receivedFab || workPcs) {
+      fabricRows.push({
+        partyName: fabricParty,
+        fabricName: fabricName,
+        colour: colour,
+        workFab: workFab,
+        plainFab: plainFab,
+        totalFab: totalFab,
+        receivedFab: receivedFab,
+        workPcs: workPcs
+      });
+    }
+  });
+
+  var handworkParty = document.getElementById('handwork-party-' + blockId) ? document.getElementById('handwork-party-' + blockId).value.trim() : '';
   var handworkDate = document.getElementById('handwork-date-' + blockId) ? document.getElementById('handwork-date-' + blockId).value : '';
   var handworkRows = [];
-  if (isSectionVisible(blockId, 'hand')) {
-    document.querySelectorAll('#handwork-tbody-' + blockId + ' tr').forEach(function (row) {
-      var inp = row.querySelectorAll('input');
-      if (handworkParty.trim()) {
-        handworkRows.push({
-          partyName: handworkParty,
-          sentDate: handworkDate,
-          colour: inp[0] ? inp[0].value : '',
-          expectedPcs: inp[1] ? inp[1].value : '',
-          receivedPcs: inp[2] ? inp[2].value : ''
-        });
-      }
-    });
-  }
+  document.querySelectorAll('#handwork-tbody-' + blockId + ' tr').forEach(function (row) {
+    var inp = row.querySelectorAll('input');
+    var colour = inp[0] ? inp[0].value.trim() : '';
+    var expectedPcs = inp[1] ? inp[1].value.trim() : '';
+    var receivedPcs = inp[2] ? inp[2].value.trim() : '';
 
-  var embParty = document.getElementById('emb-party-' + blockId) ? document.getElementById('emb-party-' + blockId).value : '';
+    if (handworkParty || colour || expectedPcs || receivedPcs) {
+      handworkRows.push({
+        partyName: handworkParty,
+        sentDate: handworkDate,
+        colour: colour,
+        expectedPcs: expectedPcs,
+        receivedPcs: receivedPcs
+      });
+    }
+  });
+
+  var embParty = document.getElementById('emb-party-' + blockId) ? document.getElementById('emb-party-' + blockId).value.trim() : '';
   var embDate = document.getElementById('emb-date-' + blockId) ? document.getElementById('emb-date-' + blockId).value : '';
   var embRows = [];
-  if (isSectionVisible(blockId, 'emb')) {
-    document.querySelectorAll('#emb-tbody-' + blockId + ' tr').forEach(function (row) {
-      var inp = row.querySelectorAll('input');
-      if (embParty.trim()) {
-        embRows.push({
-          partyName: embParty,
-          date: embDate,
-          sentFront: inp[0] ? inp[0].value : '',
-          sentBack: inp[1] ? inp[1].value : '',
-          sentSleeve: inp[2] ? inp[2].value : '',
-          returnFront: inp[3] ? inp[3].value : '',
-          returnBack: inp[4] ? inp[4].value : '',
-          returnSleeve: inp[5] ? inp[5].value : ''
-        });
-      }
-    });
-  }
+  document.querySelectorAll('#emb-tbody-' + blockId + ' tr').forEach(function (row) {
+    var inp = row.querySelectorAll('input');
+    var sentFront = inp[0] ? inp[0].value.trim() : '';
+    var sentBack = inp[1] ? inp[1].value.trim() : '';
+    var sentSleeve = inp[2] ? inp[2].value.trim() : '';
+    var returnFront = inp[3] ? inp[3].value.trim() : '';
+    var returnBack = inp[4] ? inp[4].value.trim() : '';
+    var returnSleeve = inp[5] ? inp[5].value.trim() : '';
 
-  var stitchParty = document.getElementById('stitch-party-' + blockId) ? document.getElementById('stitch-party-' + blockId).value : '';
+    if (embParty || sentFront || sentBack || sentSleeve || returnFront || returnBack || returnSleeve) {
+      embRows.push({
+        partyName: embParty,
+        date: embDate,
+        sentFront: sentFront,
+        sentBack: sentBack,
+        sentSleeve: sentSleeve,
+        returnFront: returnFront,
+        returnBack: returnBack,
+        returnSleeve: returnSleeve
+      });
+    }
+  });
+
+  var stitchParty = document.getElementById('stitch-party-' + blockId) ? document.getElementById('stitch-party-' + blockId).value.trim() : '';
   var stitchDate = document.getElementById('stitch-date-' + blockId) ? document.getElementById('stitch-date-' + blockId).value : '';
   var stitchRows = [];
-  if (isSectionVisible(blockId, 'stitch')) {
-    document.querySelectorAll('#stitch-tbody-' + blockId + ' tr').forEach(function (row) {
-      var inp = row.querySelectorAll('input');
-      if (stitchParty.trim()) {
-        stitchRows.push({
-          partyName: stitchParty,
-          sentDate: stitchDate,
-          expectedPcs: inp[0] ? inp[0].value : '',
-          receivedPcs: inp[1] ? inp[1].value : ''
-        });
-      }
-    });
-  }
+  document.querySelectorAll('#stitch-tbody-' + blockId + ' tr').forEach(function (row) {
+    var inp = row.querySelectorAll('input');
+    var expectedPcs = inp[0] ? inp[0].value.trim() : '';
+    var receivedPcs = inp[1] ? inp[1].value.trim() : '';
+
+    if (stitchParty || expectedPcs || receivedPcs) {
+      stitchRows.push({
+        partyName: stitchParty,
+        sentDate: stitchDate,
+        expectedPcs: expectedPcs,
+        receivedPcs: receivedPcs
+      });
+    }
+  });
 
   return { fabricRows: fabricRows, handworkRows: handworkRows, embRows: embRows, stitchRows: stitchRows };
 }
@@ -2965,6 +2987,8 @@ function addReadyDesign() {
 
 /* ── Row adders ── */
 function addReadyFabricRow(designId) {
+  var chk = document.getElementById('chk-r-fab-' + designId);
+  if (chk && !chk.checked) { chk.checked = true; toggleFormSection(designId, 'r-fab'); }
   if (!readyFabricCounters[designId]) readyFabricCounters[designId] = 0;
   readyFabricCounters[designId]++;
   var rowId = readyFabricCounters[designId];
@@ -2987,6 +3011,8 @@ function addReadyFabricRow(designId) {
 }
 
 function addReadyStitchRow(designId) {
+  var chk = document.getElementById('chk-r-stitch-' + designId);
+  if (chk && !chk.checked) { chk.checked = true; toggleFormSection(designId, 'r-stitch'); }
   if (!readyStitchCounters[designId]) readyStitchCounters[designId] = 0;
   readyStitchCounters[designId]++;
   var rowId = readyStitchCounters[designId];
@@ -3021,29 +3047,36 @@ function collectReadyDesigns() {
     var image = imgEl ? imgEl.src : '';
 
     var fabricRows = [];
-    if (isSectionVisible(id, 'r-fab')) {
-      document.querySelectorAll('#r-fab-tbody-' + id + ' tr').forEach(function (row) {
-        var inputs = row.querySelectorAll('input');
-        var select = row.querySelector('select');
+    document.querySelectorAll('#r-fab-tbody-' + id + ' tr').forEach(function (row) {
+      var inputs = row.querySelectorAll('input');
+      var select = row.querySelector('select');
+      var colour = inputs[0] ? inputs[0].value.trim() : '';
+      var workFab = inputs[1] ? inputs[1].value.trim() : '';
+      var receivedFab = select ? select.value.trim() : '';
+
+      if (colour || workFab || receivedFab || partyName) {
         fabricRows.push({
-          colour: inputs[0] ? inputs[0].value.trim() : '',
-          workFab: inputs[1] ? inputs[1].value.trim() : '',
+          colour: colour,
+          workFab: workFab,
           plainFab: '',
           totalFab: '',
-          receivedFab: select ? select.value : ''
+          receivedFab: receivedFab
         });
-      });
-    }
+      }
+    });
 
     var stitchParty = val('r-stitch-party-' + id);
     var stitchDate = val('r-stitch-date-' + id);
     var stitchRows = [];
-    if (isSectionVisible(id, 'r-stitch')) {
-      document.querySelectorAll('#r-stitch-tbody-' + id + ' tr').forEach(function (row) {
-        var inp = row.querySelectorAll('input');
-        stitchRows.push({ partyName: stitchParty, sentDate: stitchDate, expectedPcs: inp[0] ? inp[0].value : '', receivedPcs: inp[1] ? inp[1].value : '' });
-      });
-    }
+    document.querySelectorAll('#r-stitch-tbody-' + id + ' tr').forEach(function (row) {
+      var inp = row.querySelectorAll('input');
+      var expectedPcs = inp[0] ? inp[0].value.trim() : '';
+      var receivedPcs = inp[1] ? inp[1].value.trim() : '';
+
+      if (expectedPcs || receivedPcs || stitchParty) {
+        stitchRows.push({ partyName: stitchParty, sentDate: stitchDate, expectedPcs: expectedPcs, receivedPcs: receivedPcs });
+      }
+    });
 
     designs.push({ partyName: partyName, stitchParty: stitchParty, dNo: dNo, fabric: fabric, date: date, image: image, fabricRows: fabricRows, stitchRows: stitchRows });
   });
