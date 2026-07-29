@@ -1685,6 +1685,15 @@ function addDesign() {
   addEmbroideryRow(id);
   addStitchRow(id);
 
+  // Default all sections to hidden and unchecked on brand new design block
+  if (!currentEditId) {
+    ['fab', 'hand', 'emb', 'stitch'].forEach(function (secKey) {
+      var chk = document.getElementById('chk-' + secKey + '-' + id);
+      if (chk) chk.checked = false;
+      toggleFormSection(id, secKey);
+    });
+  }
+
   // If not edit mode and design Count > 1, scroll to it
   if (!currentEditId && id > 1) {
     block.scrollIntoView({ behavior: 'smooth' });
@@ -1815,104 +1824,109 @@ function toggleFormSection(designId, secKey) {
   }
 }
 
-function isSectionVisible(designId, secKey) {
+function isSectionChecked(designId, secKey) {
   var chk = document.getElementById('chk-' + secKey + '-' + designId);
-  var wrap = document.getElementById('section-wrap-' + secKey + '-' + designId);
-  if (chk && !chk.checked) return false;
-  if (wrap && wrap.style.display === 'none') return false;
-  return true;
+  return chk ? chk.checked : false;
 }
 
 function collectRows(blockId) {
   var fabricParty = document.getElementById('fabric-party-' + blockId) ? document.getElementById('fabric-party-' + blockId).value.trim() : '';
   var fabricRows = [];
-  document.querySelectorAll('#fabric-tbody-' + blockId + ' tr').forEach(function (row) {
-    var inp = row.querySelectorAll('input');
-    var fabricName = inp[0] ? inp[0].value.trim() : '';
-    var colour = inp[1] ? inp[1].value.trim() : '';
-    var workFab = inp[2] ? inp[2].value.trim() : '';
-    var plainFab = inp[3] ? inp[3].value.trim() : '';
-    var totalFab = inp[4] ? inp[4].value.trim() : '';
-    var receivedFab = inp[5] ? inp[5].value.trim() : '';
-    var workPcs = inp[6] ? inp[6].value.trim() : '';
+  if (isSectionChecked(blockId, 'fab')) {
+    document.querySelectorAll('#fabric-tbody-' + blockId + ' tr').forEach(function (row) {
+      var inp = row.querySelectorAll('input');
+      var fabricName = inp[0] ? inp[0].value.trim() : '';
+      var colour = inp[1] ? inp[1].value.trim() : '';
+      var workFab = inp[2] ? inp[2].value.trim() : '';
+      var plainFab = inp[3] ? inp[3].value.trim() : '';
+      var totalFab = inp[4] ? inp[4].value.trim() : '';
+      var receivedFab = inp[5] ? inp[5].value.trim() : '';
+      var workPcs = inp[6] ? inp[6].value.trim() : '';
 
-    if (fabricParty || fabricName || colour || workFab || plainFab || totalFab || receivedFab || workPcs) {
-      fabricRows.push({
-        partyName: fabricParty,
-        fabricName: fabricName,
-        colour: colour,
-        workFab: workFab,
-        plainFab: plainFab,
-        totalFab: totalFab,
-        receivedFab: receivedFab,
-        workPcs: workPcs
-      });
-    }
-  });
+      if (fabricParty || fabricName || colour || workFab || plainFab || totalFab || receivedFab || workPcs) {
+        fabricRows.push({
+          partyName: fabricParty,
+          fabricName: fabricName,
+          colour: colour,
+          workFab: workFab,
+          plainFab: plainFab,
+          totalFab: totalFab,
+          receivedFab: receivedFab,
+          workPcs: workPcs
+        });
+      }
+    });
+  }
 
   var handworkParty = document.getElementById('handwork-party-' + blockId) ? document.getElementById('handwork-party-' + blockId).value.trim() : '';
   var handworkDate = document.getElementById('handwork-date-' + blockId) ? document.getElementById('handwork-date-' + blockId).value : '';
   var handworkRows = [];
-  document.querySelectorAll('#handwork-tbody-' + blockId + ' tr').forEach(function (row) {
-    var inp = row.querySelectorAll('input');
-    var colour = inp[0] ? inp[0].value.trim() : '';
-    var expectedPcs = inp[1] ? inp[1].value.trim() : '';
-    var receivedPcs = inp[2] ? inp[2].value.trim() : '';
+  if (isSectionChecked(blockId, 'hand')) {
+    document.querySelectorAll('#handwork-tbody-' + blockId + ' tr').forEach(function (row) {
+      var inp = row.querySelectorAll('input');
+      var colour = inp[0] ? inp[0].value.trim() : '';
+      var expectedPcs = inp[1] ? inp[1].value.trim() : '';
+      var receivedPcs = inp[2] ? inp[2].value.trim() : '';
 
-    if (handworkParty || colour || expectedPcs || receivedPcs) {
-      handworkRows.push({
-        partyName: handworkParty,
-        sentDate: handworkDate,
-        colour: colour,
-        expectedPcs: expectedPcs,
-        receivedPcs: receivedPcs
-      });
-    }
-  });
+      if (handworkParty || colour || expectedPcs || receivedPcs) {
+        handworkRows.push({
+          partyName: handworkParty,
+          sentDate: handworkDate,
+          colour: colour,
+          expectedPcs: expectedPcs,
+          receivedPcs: receivedPcs
+        });
+      }
+    });
+  }
 
   var embParty = document.getElementById('emb-party-' + blockId) ? document.getElementById('emb-party-' + blockId).value.trim() : '';
   var embDate = document.getElementById('emb-date-' + blockId) ? document.getElementById('emb-date-' + blockId).value : '';
   var embRows = [];
-  document.querySelectorAll('#emb-tbody-' + blockId + ' tr').forEach(function (row) {
-    var inp = row.querySelectorAll('input');
-    var sentFront = inp[0] ? inp[0].value.trim() : '';
-    var sentBack = inp[1] ? inp[1].value.trim() : '';
-    var sentSleeve = inp[2] ? inp[2].value.trim() : '';
-    var returnFront = inp[3] ? inp[3].value.trim() : '';
-    var returnBack = inp[4] ? inp[4].value.trim() : '';
-    var returnSleeve = inp[5] ? inp[5].value.trim() : '';
+  if (isSectionChecked(blockId, 'emb')) {
+    document.querySelectorAll('#emb-tbody-' + blockId + ' tr').forEach(function (row) {
+      var inp = row.querySelectorAll('input');
+      var sentFront = inp[0] ? inp[0].value.trim() : '';
+      var sentBack = inp[1] ? inp[1].value.trim() : '';
+      var sentSleeve = inp[2] ? inp[2].value.trim() : '';
+      var returnFront = inp[3] ? inp[3].value.trim() : '';
+      var returnBack = inp[4] ? inp[4].value.trim() : '';
+      var returnSleeve = inp[5] ? inp[5].value.trim() : '';
 
-    if (embParty || sentFront || sentBack || sentSleeve || returnFront || returnBack || returnSleeve) {
-      embRows.push({
-        partyName: embParty,
-        date: embDate,
-        sentFront: sentFront,
-        sentBack: sentBack,
-        sentSleeve: sentSleeve,
-        returnFront: returnFront,
-        returnBack: returnBack,
-        returnSleeve: returnSleeve
-      });
-    }
-  });
+      if (embParty || sentFront || sentBack || sentSleeve || returnFront || returnBack || returnSleeve) {
+        embRows.push({
+          partyName: embParty,
+          date: embDate,
+          sentFront: sentFront,
+          sentBack: sentBack,
+          sentSleeve: sentSleeve,
+          returnFront: returnFront,
+          returnBack: returnBack,
+          returnSleeve: returnSleeve
+        });
+      }
+    });
+  }
 
   var stitchParty = document.getElementById('stitch-party-' + blockId) ? document.getElementById('stitch-party-' + blockId).value.trim() : '';
   var stitchDate = document.getElementById('stitch-date-' + blockId) ? document.getElementById('stitch-date-' + blockId).value : '';
   var stitchRows = [];
-  document.querySelectorAll('#stitch-tbody-' + blockId + ' tr').forEach(function (row) {
-    var inp = row.querySelectorAll('input');
-    var expectedPcs = inp[0] ? inp[0].value.trim() : '';
-    var receivedPcs = inp[1] ? inp[1].value.trim() : '';
+  if (isSectionChecked(blockId, 'stitch')) {
+    document.querySelectorAll('#stitch-tbody-' + blockId + ' tr').forEach(function (row) {
+      var inp = row.querySelectorAll('input');
+      var expectedPcs = inp[0] ? inp[0].value.trim() : '';
+      var receivedPcs = inp[1] ? inp[1].value.trim() : '';
 
-    if (stitchParty || expectedPcs || receivedPcs) {
-      stitchRows.push({
-        partyName: stitchParty,
-        sentDate: stitchDate,
-        expectedPcs: expectedPcs,
-        receivedPcs: receivedPcs
-      });
-    }
-  });
+      if (stitchParty || expectedPcs || receivedPcs) {
+        stitchRows.push({
+          partyName: stitchParty,
+          sentDate: stitchDate,
+          expectedPcs: expectedPcs,
+          receivedPcs: receivedPcs
+        });
+      }
+    });
+  }
 
   return { fabricRows: fabricRows, handworkRows: handworkRows, embRows: embRows, stitchRows: stitchRows };
 }
@@ -1923,18 +1937,18 @@ function fillRows(blockId, data) {
   var embRows = data.embRows || [];
   var stitchRows = data.stitchRows || [];
 
-  // On edit time: make ALL sections visible and checked
+  // Update section checklist selection when editing an existing order
   var chkFab = document.getElementById('chk-fab-' + blockId);
-  if (chkFab) { chkFab.checked = true; toggleFormSection(blockId, 'fab'); }
+  if (chkFab) { chkFab.checked = fabricRows.length > 0; toggleFormSection(blockId, 'fab'); }
 
   var chkHand = document.getElementById('chk-hand-' + blockId);
-  if (chkHand) { chkHand.checked = true; toggleFormSection(blockId, 'hand'); }
+  if (chkHand) { chkHand.checked = handworkRows.length > 0; toggleFormSection(blockId, 'hand'); }
 
   var chkEmb = document.getElementById('chk-emb-' + blockId);
-  if (chkEmb) { chkEmb.checked = true; toggleFormSection(blockId, 'emb'); }
+  if (chkEmb) { chkEmb.checked = embRows.length > 0; toggleFormSection(blockId, 'emb'); }
 
   var chkStitch = document.getElementById('chk-stitch-' + blockId);
-  if (chkStitch) { chkStitch.checked = true; toggleFormSection(blockId, 'stitch'); }
+  if (chkStitch) { chkStitch.checked = stitchRows.length > 0; toggleFormSection(blockId, 'stitch'); }
 
   /* Fabric */
   document.getElementById('fabric-tbody-' + blockId).innerHTML = '';
@@ -2219,12 +2233,12 @@ async function editRecord(recordId) {
         }
       });
 
-      // On edit time for ready order: make ALL sections visible and checked
+      // On edit time for ready order: make sections with data visible and checked
       var chkRFab = document.getElementById('chk-r-fab-' + rId);
-      if (chkRFab) { chkRFab.checked = true; toggleFormSection(rId, 'r-fab'); }
+      if (chkRFab) { chkRFab.checked = fabricRows.length > 0; toggleFormSection(rId, 'r-fab'); }
 
       var chkRStitch = document.getElementById('chk-r-stitch-' + rId);
-      if (chkRStitch) { chkRStitch.checked = true; toggleFormSection(rId, 'r-stitch'); }
+      if (chkRStitch) { chkRStitch.checked = stitchRows.length > 0; toggleFormSection(rId, 'r-stitch'); }
 
       // Update submit button to show Update mode
       var readyBtn = document.getElementById('ready-submit-btn');
@@ -2981,6 +2995,15 @@ function addReadyDesign() {
   // Default one row per section
   addReadyFabricRow(id);
   addReadyStitchRow(id);
+
+  // Default all sections to hidden and unchecked on brand new ready design block
+  if (!currentEditId) {
+    ['r-fab', 'r-stitch'].forEach(function (secKey) {
+      var chk = document.getElementById('chk-' + secKey + '-' + id);
+      if (chk) chk.checked = false;
+      toggleFormSection(id, secKey);
+    });
+  }
 
   if (readyDesignCount > 1) block.scrollIntoView({ behavior: 'smooth' });
 }
