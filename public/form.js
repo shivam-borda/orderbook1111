@@ -2303,6 +2303,7 @@ async function editRecord(recordId) {
 
       fillRows(blockId, {
         fabricRows: order.fabricRows || [],
+        handworkRows: order.handworkRows || [],
         embRows: order.embRows || [],
         stitchRows: order.stitchRows || []
       });
