@@ -143,13 +143,7 @@ async function fetchAndCacheOrders(select) {
    LOAD SINGLE ORDER / DETAILS
 ───────────────────────────────────────── */
 async function loadOrder(id) {
-  var res;
-  try {
-    res = await sbFetch('orders?select=*,fabric_rows(*),emb_rows(*),stitch_rows(*),handwork_rows(*)&id=eq.' + id);
-    if (!res.ok) throw new Error('Query failed');
-  } catch (e) {
-    res = await sbFetch('orders?select=*,fabric_rows(*),emb_rows(*),stitch_rows(*)&id=eq.' + id);
-  }
+  var res = await sbFetch('orders?select=*,fabric_rows(*),emb_rows(*),stitch_rows(*)&id=eq.' + id);
   if (!res.ok) throw new Error('Failed to load order');
   var data = await res.json();
   if (!data || !data.length) throw new Error('Not found');
@@ -157,22 +151,16 @@ async function loadOrder(id) {
 }
 
 async function loadOrderDetails(id) {
-  var res;
-  try {
-    res = await sbFetch('orders?select=fabric_rows(*),emb_rows(*),stitch_rows(*),handwork_rows(*)&id=eq.' + id);
-    if (!res.ok) throw new Error('Query failed');
-  } catch (e) {
-    res = await sbFetch('orders?select=fabric_rows(*),emb_rows(*),stitch_rows(*)&id=eq.' + id);
-  }
+  var res = await sbFetch('orders?select=fabric_rows(*),emb_rows(*),stitch_rows(*)&id=eq.' + id);
   if (!res.ok) throw new Error('Failed to load order details');
   var data = await res.json();
   if (!data || !data.length) throw new Error('Not found');
-  var o = data[0];
+  var mapped = mapOrder(data[0]);
   return {
-    fabricRows: (o.fabric_rows || []).map(mapFabricRow),
-    embRows: (o.emb_rows || []).map(mapEmbRow),
-    stitchRows: (o.stitch_rows || []).map(mapStitchRow),
-    handworkRows: (o.handwork_rows || []).map(mapHandworkRow)
+    fabricRows: mapped.fabricRows,
+    embRows: mapped.embRows,
+    stitchRows: mapped.stitchRows,
+    handworkRows: mapped.handworkRows
   };
 }
 
@@ -196,6 +184,38 @@ function getLocalStatusOverride(id) {
 
 function mapOrder(o) {
   var localStatus = getLocalStatusOverride(o.id);
+  var rawStitch = o.stitch_rows || [];
+  var stitchRows = [];
+  var handworkRows = [];
+
+  rawStitch.forEach(function (r) {
+    if (r.party_name && r.party_name.indexOf('[HANDWORK]') === 0) {
+      var realParty = r.party_name.substring(10);
+      var sentDate = r.sent_date || '';
+      var colour = '';
+      if (sentDate.indexOf('||') !== -1) {
+        var parts = sentDate.split('||');
+        sentDate = parts[0];
+        colour = parts[1];
+      }
+      handworkRows.push({
+        partyName: realParty,
+        sentDate: sentDate,
+        colour: colour,
+        expectedPcs: r.expected_pcs,
+        receivedPcs: r.received_pcs
+      });
+    } else {
+      stitchRows.push(mapStitchRow(r));
+    }
+  });
+
+  if (o.handwork_rows && o.handwork_rows.length > 0) {
+    o.handwork_rows.forEach(function (r) {
+      handworkRows.push(mapHandworkRow(r));
+    });
+  }
+
   return {
     id: o.id,
     orderNo: o.order_no,
@@ -208,8 +228,8 @@ function mapOrder(o) {
     status: localStatus || o.status || 'open',
     fabricRows: (o.fabric_rows || []).map(mapFabricRow),
     embRows: (o.emb_rows || []).map(mapEmbRow),
-    stitchRows: (o.stitch_rows || []).map(mapStitchRow),
-    handworkRows: (o.handwork_rows || []).map(mapHandworkRow)
+    stitchRows: stitchRows,
+    handworkRows: handworkRows
   };
 }
 
@@ -463,25 +483,22 @@ async function saveOrder(orderData) {
     });
   }
 
-  // Insert handwork rows (safe catch if table not created yet)
+  // Insert handwork rows
   if (orderData.handworkRows && orderData.handworkRows.length > 0) {
-    try {
-      await sbFetch('handwork_rows', {
-        method: 'POST',
-        body: orderData.handworkRows.map(function (r) {
-          return {
-            order_id: orderId,
-            party_name: r.partyName,
-            sent_date: r.sentDate,
-            colour: r.colour,
-            expected_pcs: r.expectedPcs,
-            received_pcs: r.receivedPcs
-          };
-        })
-      });
-    } catch (e) {
-      console.warn("handwork_rows insert failed (table might not exist):", e);
-    }
+    var hwPayload = orderData.handworkRows.map(function (r) {
+      var dateAndColour = (r.sentDate || '') + (r.colour ? '||' + r.colour : '');
+      return {
+        order_id: orderId,
+        party_name: '[HANDWORK]' + (r.partyName || ''),
+        sent_date: dateAndColour,
+        expected_pcs: r.expectedPcs || '',
+        received_pcs: r.receivedPcs || ''
+      };
+    });
+    await sbFetch('stitch_rows', {
+      method: 'POST',
+      body: hwPayload
+    });
   }
 
   return order;
@@ -604,23 +621,20 @@ async function updateOrder(id, orderData) {
 
   // Re-insert handwork rows
   if (orderData.handworkRows && orderData.handworkRows.length > 0) {
-    try {
-      await sbFetch('handwork_rows', {
-        method: 'POST',
-        body: orderData.handworkRows.map(function (r) {
-          return {
-            order_id: id,
-            party_name: r.partyName,
-            sent_date: r.sentDate,
-            colour: r.colour,
-            expected_pcs: r.expectedPcs,
-            received_pcs: r.receivedPcs
-          };
-        })
-      });
-    } catch (e) {
-      console.warn("handwork_rows update failed (table might not exist):", e);
-    }
+    var hwPayload = orderData.handworkRows.map(function (r) {
+      var dateAndColour = (r.sentDate || '') + (r.colour ? '||' + r.colour : '');
+      return {
+        order_id: id,
+        party_name: '[HANDWORK]' + (r.partyName || ''),
+        sent_date: dateAndColour,
+        expected_pcs: r.expectedPcs || '',
+        received_pcs: r.receivedPcs || ''
+      };
+    });
+    await sbFetch('stitch_rows', {
+      method: 'POST',
+      body: hwPayload
+    });
   }
 }
 
