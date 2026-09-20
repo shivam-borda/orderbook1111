@@ -1318,12 +1318,14 @@ async function printOrderSlip(orderId, type) {
     var oldDesignCount = designCount;
     var oldFabricCounters = fabricCounters;
     var oldEmbroideryCounters = embroideryCounters;
+    var oldHandworkCounters = handworkCounters;
     var oldStitchCounters = stitchCounters;
 
     designsWrap.innerHTML = '';
     designCount = 0;
     fabricCounters = {};
     embroideryCounters = {};
+    handworkCounters = {};
     stitchCounters = {};
 
     addDesign();
