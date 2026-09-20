@@ -277,10 +277,7 @@ function selectOrder(orderId) {
         '<td>' + escHtml(r.fabricName) + '</td>' +
         '<td>' + escHtml(r.colour) + '</td>' +
         '<td>' + escHtml(r.workFab) + '</td>' +
-        '<td>' + escHtml(r.plainFab) + '</td>' +
-        '<td>' + escHtml(r.totalFab) + '</td>' +
         '<td>' + escHtml(r.receivedFab) + '</td>' +
-        '<td>' + escHtml(r.workPcs) + '</td>' +
         '</tr>';
     }).join('');
 
@@ -359,7 +356,7 @@ function selectOrder(orderId) {
   }
 
   var fabricCard = fabricRows
-    ? '<div class="table-card"><div class="table-header-row"><span class="table-title">Fabric Allocations</span><button class="btn btn-primary btn-sm" onclick="printOrderSlip(\'' + order.id + '\', \'fabric\')">&#x1F5A8; Print Fabric</button></div><div class="table-wrap"><table><thead><tr><th class="fabric-th">#</th><th class="fabric-th">Party Name</th><th class="fabric-th">Fabric Name</th><th class="fabric-th">Colour</th><th class="fabric-th">Work Fab</th><th class="fabric-th">Plain Fab</th><th class="fabric-th">Total Fab</th><th class="fabric-th">Received Fab</th><th class="fabric-th">Work Pcs</th></tr></thead><tbody>' + fabricRows + '</tbody></table></div></div>'
+    ? '<div class="table-card"><div class="table-header-row"><span class="table-title">Fabric Allocations</span><button class="btn btn-primary btn-sm" onclick="printOrderSlip(\'' + order.id + '\', \'fabric\')">&#x1F5A8; Print Fabric</button></div><div class="table-wrap"><table><thead><tr><th class="fabric-th">#</th><th class="fabric-th">Party Name</th><th class="fabric-th">Fabric Name</th><th class="fabric-th">Colour</th><th class="fabric-th">Work Fab</th><th class="fabric-th">Received Fab</th></tr></thead><tbody>' + fabricRows + '</tbody></table></div></div>'
     : '';
 
   var embCard = embRows
@@ -739,10 +736,7 @@ function selectFabricParty(partyName) {
         '<td>' + escHtml(r.fabricName) + '</td>' +
         '<td>' + escHtml(r.colour) + '</td>' +
         '<td>' + escHtml(r.workFab) + '</td>' +
-        '<td>' + escHtml(r.plainFab) + '</td>' +
-        '<td>' + escHtml(r.totalFab) + '</td>' +
         '<td>' + escHtml(r.receivedFab) + '</td>' +
-        '<td>' + escHtml(r.workPcs) + '</td>' +
         '</tr>';
     }).join('');
 
@@ -760,10 +754,7 @@ function selectFabricParty(partyName) {
       '<th class="fabric-th">Fabric Name</th>' +
       '<th class="fabric-th">Colour</th>' +
       '<th class="fabric-th">Work Fab</th>' +
-      '<th class="fabric-th">Plain Fab</th>' +
-      '<th class="fabric-th">Total Fab</th>' +
       '<th class="fabric-th">Received Fab</th>' +
-      '<th class="fabric-th">Work Pcs</th>' +
       '</tr></thead>' +
       '<tbody>' + rowsHtml + '</tbody>' +
       '</table>' +
@@ -1124,10 +1115,7 @@ function renderOrderDetailsInPane(orderId, containerId) {
       '<td>' + escHtml(r.fabricName) + '</td>' +
       '<td>' + escHtml(r.colour) + '</td>' +
       '<td>' + escHtml(r.workFab) + '</td>' +
-      '<td>' + escHtml(r.plainFab) + '</td>' +
-      '<td>' + escHtml(r.totalFab) + '</td>' +
       '<td>' + escHtml(r.receivedFab) + '</td>' +
-      '<td>' + escHtml(r.workPcs) + '</td>' +
       '</tr>';
   }).join('');
 
@@ -1187,7 +1175,7 @@ function renderOrderDetailsInPane(orderId, containerId) {
     '</div>' +
     '</div>' +
     '<div class="order-card-detail-tables" style="padding:0;">' +
-    (fabricRows ? '<div class="table-card"><div class="table-header-row"><span class="table-title">Fabric Allocations</span></div><div class="table-wrap"><table><thead><tr><th class="fabric-th">#</th><th class="fabric-th">Party Name</th><th class="fabric-th">Fabric Name</th><th class="fabric-th">Colour</th><th class="fabric-th">Work Fab</th><th class="fabric-th">Plain Fab</th><th class="fabric-th">Total Fab</th><th class="fabric-th">Received Fab</th><th class="fabric-th">Work Pcs</th></tr></thead><tbody>' + fabricRows + '</tbody></table></div></div>' : '') +
+    (fabricRows ? '<div class="table-card"><div class="table-header-row"><span class="table-title">Fabric Allocations</span></div><div class="table-wrap"><table><thead><tr><th class="fabric-th">#</th><th class="fabric-th">Party Name</th><th class="fabric-th">Fabric Name</th><th class="fabric-th">Colour</th><th class="fabric-th">Work Fab</th><th class="fabric-th">Received Fab</th></tr></thead><tbody>' + fabricRows + '</tbody></table></div></div>' : '') +
     (handworkRows ? '<div class="table-card"><div class="table-header-row"><span class="table-title" style="color:#d81b60;">Hand Work Progress</span></div><div class="table-wrap"><table><thead><tr><th style="background:#d81b60;color:#fff">#</th><th style="background:#d81b60;color:#fff">Party Name</th><th style="background:#d81b60;color:#fff">Sent Date</th><th style="background:#d81b60;color:#fff">Colour</th><th style="background:#d81b60;color:#fff">Expected Pcs</th><th style="background:#d81b60;color:#fff">Received Pcs</th></tr></thead><tbody>' + handworkRows + '</tbody></table></div></div>' : '') +
     (embRows ? '<div class="table-card"><div class="table-header-row"><span class="table-title">Embroidery Details</span></div><div class="table-wrap"><table><thead><tr><th class="embroidery-th">#</th><th class="embroidery-th">Party Name</th><th class="embroidery-th">Date</th><th class="embroidery-th">Sent Front</th><th class="embroidery-th">Sent Back</th><th class="embroidery-th">Sent Sleeve</th><th class="embroidery-th">Ret Front</th><th class="embroidery-th">Ret Back</th><th class="embroidery-th">Ret Sleeve</th></tr></thead><tbody>' + embRows + '</tbody></table></div></div>' : '') +
     (stitchRows ? '<div class="table-card"><div class="table-header-row"><span class="table-title">Stitching Progress</span></div><div class="table-wrap"><table><thead><tr><th class="stitching-th">#</th><th class="stitching-th">Party</th><th class="stitching-th">Sent Date</th><th class="stitching-th">Expected Pcs</th><th class="stitching-th">Received Pcs</th></tr></thead><tbody>' + stitchRows + '</tbody></table></div></div>' : '') +
@@ -1211,7 +1199,7 @@ function printPipeline(type) {
 
   if (type === 'fabric') {
     title = 'Fabric Allocation Registry';
-    headers = ['Order No', 'Design No', 'Date', 'Party Name', 'Fabric Name', 'Colour', 'Work Fab', 'Plain Fab', 'Total Fab', 'Received Fab', 'Work Pcs'];
+    headers = ['Order No', 'Design No', 'Date', 'Party Name', 'Fabric Name', 'Colour', 'Work Fab', 'Received Fab'];
     var rawRows = getFabricPipeline(cachedOrders);
 
     var q = document.getElementById('search-fabric') ? document.getElementById('search-fabric').value.trim().toLowerCase() : '';
@@ -1234,10 +1222,7 @@ function printPipeline(type) {
         '<td>' + escHtml(r.fabricName) + '</td>' +
         '<td>' + escHtml(r.colour) + '</td>' +
         '<td>' + escHtml(r.workFab) + '</td>' +
-        '<td>' + escHtml(r.plainFab) + '</td>' +
-        '<td>' + escHtml(r.totalFab) + '</td>' +
         '<td>' + escHtml(r.receivedFab) + '</td>' +
-        '<td>' + escHtml(r.workPcs) + '</td>' +
         '</tr>';
     });
   } else if (type === 'embroidery') {
@@ -1558,10 +1543,7 @@ function addDesign() {
     '<th style="background:var(--primary);color:#fff">Fabric Name</th>' +
     '<th style="background:var(--primary);color:#fff">Colour</th>' +
     '<th style="background:var(--primary);color:#fff">Work Fab</th>' +
-    '<th style="background:var(--primary);color:#fff">Plain Fab</th>' +
-    '<th style="background:var(--primary);color:#fff">Total Fab</th>' +
     '<th style="background:var(--primary);color:#fff">Received Fab</th>' +
-    '<th style="background:var(--primary);color:#fff">Work Pcs</th>' +
     '<th style="background:var(--primary);color:#fff"></th>' +
     '</tr></thead>' +
     '<tbody id="fabric-tbody-' + id + '"></tbody>' +
@@ -1749,10 +1731,7 @@ function addFabricRow(designId) {
     '<td><input type="text" placeholder="Fabric name" /></td>' +
     '<td><input type="text" placeholder="Colour" /></td>' +
     '<td><input type="text" placeholder="Work Fab" /></td>' +
-    '<td><input type="text" placeholder="Plain Fab" /></td>' +
-    '<td><input type="text" placeholder="Total" /></td>' +
     '<td><input type="text" placeholder="Received" /></td>' +
-    '<td><input type="text" placeholder="Work pcs" /></td>' +
     '<td><button class="remove-row-btn" onclick="removeRow(\'fabric-row-' + designId + '-' + rowId + '\')">&#x2715;</button></td>';
   tbody.appendChild(tr);
 }
@@ -1838,21 +1817,18 @@ function collectRows(blockId) {
       var fabricName = inp[0] ? inp[0].value.trim() : '';
       var colour = inp[1] ? inp[1].value.trim() : '';
       var workFab = inp[2] ? inp[2].value.trim() : '';
-      var plainFab = inp[3] ? inp[3].value.trim() : '';
-      var totalFab = inp[4] ? inp[4].value.trim() : '';
-      var receivedFab = inp[5] ? inp[5].value.trim() : '';
-      var workPcs = inp[6] ? inp[6].value.trim() : '';
+      var receivedFab = inp[3] ? inp[3].value.trim() : '';
 
-      if (fabricParty || fabricName || colour || workFab || plainFab || totalFab || receivedFab || workPcs) {
+      if (fabricParty || fabricName || colour || workFab || receivedFab) {
         fabricRows.push({
           partyName: fabricParty,
           fabricName: fabricName,
           colour: colour,
           workFab: workFab,
-          plainFab: plainFab,
-          totalFab: totalFab,
+          plainFab: '',
+          totalFab: '',
           receivedFab: receivedFab,
-          workPcs: workPcs
+          workPcs: ''
         });
       }
     });
@@ -1961,7 +1937,7 @@ function fillRows(blockId, data) {
     addFabricRow(blockId);
     var rowId = fabricCounters[blockId];
     var inp = document.getElementById('fabric-row-' + blockId + '-' + rowId).querySelectorAll('input');
-    [r.fabricName, r.colour, r.workFab, r.plainFab, r.totalFab, r.receivedFab, r.workPcs]
+    [r.fabricName, r.colour, r.workFab, r.receivedFab]
       .forEach(function (v, i) { if (inp[i]) inp[i].value = v || ''; });
   });
 

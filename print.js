@@ -36,7 +36,7 @@ function printAs(mode) {
       heading: 'Fabric Order',
       icon: '&#x1F9F5;',
       thColor: '#3949ab',
-      fields: ['Fabric Name', 'Colour', 'Work Fab', 'Plain Fab', 'Total Fab', 'Received Fab', 'Work Pcs'],
+      fields: ['Fabric Name', 'Colour', 'Work Fab', 'Received Fab'],
       tbodyPrefix: 'fabric-tbody-'
     },
     handwork: {
