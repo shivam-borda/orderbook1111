@@ -3085,11 +3085,12 @@ function collectReadyDesigns() {
     var stitchRows = [];
     document.querySelectorAll('#r-stitch-tbody-' + id + ' tr').forEach(function (row) {
       var inp = row.querySelectorAll('input');
-      var expectedPcs = inp[0] ? inp[0].value.trim() : '';
-      var receivedPcs = inp[1] ? inp[1].value.trim() : '';
+      var colour = inp[0] ? inp[0].value.trim() : '';
+      var expectedPcs = inp[1] ? inp[1].value.trim() : '';
+      var receivedPcs = inp[2] ? inp[2].value.trim() : '';
 
-      if (expectedPcs || receivedPcs || stitchParty) {
-        stitchRows.push({ partyName: stitchParty, sentDate: stitchDate, expectedPcs: expectedPcs, receivedPcs: receivedPcs });
+      if (colour || expectedPcs || receivedPcs || stitchParty) {
+        stitchRows.push({ partyName: stitchParty, sentDate: stitchDate, colour: colour, expectedPcs: expectedPcs, receivedPcs: receivedPcs });
       }
     });
 
