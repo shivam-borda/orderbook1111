@@ -316,6 +316,7 @@ function selectOrder(orderId) {
         '<td>' + (idx + 1) + '</td>' +
         '<td>' + escHtml(r.partyName) + '</td>' +
         '<td>' + escHtml(r.sentDate) + '</td>' +
+        '<td>' + escHtml(r.colour || '—') + '</td>' +
         '<td>' + escHtml(r.expectedPcs) + '</td>' +
         '<td>' + escHtml(r.receivedPcs) + '</td>' +
         '</tr>';
@@ -368,7 +369,7 @@ function selectOrder(orderId) {
     : '';
 
   var stitchCard = stitchRows
-    ? '<div class="table-card"><div class="table-header-row"><span class="table-title">Stitching Progress</span><button class="btn btn-teal btn-sm" onclick="printOrderSlip(\'' + order.id + '\', \'stitch\')">&#x2702;&#xFE0F; Print Stitching</button></div><div class="table-wrap"><table><thead><tr><th class="stitching-th">#</th><th class="stitching-th">Party</th><th class="stitching-th">Sent Date</th><th class="stitching-th">Expected Pcs</th><th class="stitching-th">Received Pcs</th></tr></thead><tbody>' + stitchRows + '</tbody></table></div></div>'
+    ? '<div class="table-card"><div class="table-header-row"><span class="table-title">Stitching Progress</span><button class="btn btn-teal btn-sm" onclick="printOrderSlip(\'' + order.id + '\', \'stitch\')">&#x2702;&#xFE0F; Print Stitching</button></div><div class="table-wrap"><table><thead><tr><th class="stitching-th">#</th><th class="stitching-th">Party</th><th class="stitching-th">Sent Date</th><th class="stitching-th">Colour</th><th class="stitching-th">Expected Pcs</th><th class="stitching-th">Received Pcs</th></tr></thead><tbody>' + stitchRows + '</tbody></table></div></div>'
     : '';
 
   detailContainer.innerHTML =
@@ -1029,6 +1030,7 @@ function selectStitchingParty(partyName) {
   var groupsHtml = grouped.map(function (g) {
     var rowsHtml = g.rows.map(function (r) {
       return '<tr>' +
+        '<td>' + escHtml(r.colour || '—') + '</td>' +
         '<td>' + escHtml(r.expectedPcs) + ' pcs</td>' +
         '<td>' + escHtml(r.receivedPcs) + ' pcs</td>' +
         '<td>' + r.balance + ' pcs</td>' +
@@ -1046,6 +1048,7 @@ function selectStitchingParty(partyName) {
       '<div class="table-wrap">' +
       '<table>' +
       '<thead><tr>' +
+      '<th class="stitching-th">Colour</th>' +
       '<th class="stitching-th">Expected Pcs</th>' +
       '<th class="stitching-th">Received Pcs</th>' +
       '<th class="stitching-th">Balance</th>' +
@@ -1149,6 +1152,7 @@ function renderOrderDetailsInPane(orderId, containerId) {
       '<td>' + (idx + 1) + '</td>' +
       '<td>' + escHtml(r.partyName) + '</td>' +
       '<td>' + escHtml(r.sentDate) + '</td>' +
+      '<td>' + escHtml(r.colour || '—') + '</td>' +
       '<td>' + escHtml(r.expectedPcs) + '</td>' +
       '<td>' + escHtml(r.receivedPcs) + '</td>' +
       '</tr>';
@@ -1178,7 +1182,7 @@ function renderOrderDetailsInPane(orderId, containerId) {
     (fabricRows ? '<div class="table-card"><div class="table-header-row"><span class="table-title">Fabric Allocations</span></div><div class="table-wrap"><table><thead><tr><th class="fabric-th">#</th><th class="fabric-th">Party Name</th><th class="fabric-th">Fabric Name</th><th class="fabric-th">Colour</th><th class="fabric-th">Work Fab</th><th class="fabric-th">Received Fab</th></tr></thead><tbody>' + fabricRows + '</tbody></table></div></div>' : '') +
     (handworkRows ? '<div class="table-card"><div class="table-header-row"><span class="table-title" style="color:#d81b60;">Hand Work Progress</span></div><div class="table-wrap"><table><thead><tr><th style="background:#d81b60;color:#fff">#</th><th style="background:#d81b60;color:#fff">Party Name</th><th style="background:#d81b60;color:#fff">Sent Date</th><th style="background:#d81b60;color:#fff">Colour</th><th style="background:#d81b60;color:#fff">Expected Pcs</th><th style="background:#d81b60;color:#fff">Received Pcs</th></tr></thead><tbody>' + handworkRows + '</tbody></table></div></div>' : '') +
     (embRows ? '<div class="table-card"><div class="table-header-row"><span class="table-title">Embroidery Details</span></div><div class="table-wrap"><table><thead><tr><th class="embroidery-th">#</th><th class="embroidery-th">Party Name</th><th class="embroidery-th">Date</th><th class="embroidery-th">Sent Front</th><th class="embroidery-th">Sent Back</th><th class="embroidery-th">Sent Sleeve</th><th class="embroidery-th">Ret Front</th><th class="embroidery-th">Ret Back</th><th class="embroidery-th">Ret Sleeve</th></tr></thead><tbody>' + embRows + '</tbody></table></div></div>' : '') +
-    (stitchRows ? '<div class="table-card"><div class="table-header-row"><span class="table-title">Stitching Progress</span></div><div class="table-wrap"><table><thead><tr><th class="stitching-th">#</th><th class="stitching-th">Party</th><th class="stitching-th">Sent Date</th><th class="stitching-th">Expected Pcs</th><th class="stitching-th">Received Pcs</th></tr></thead><tbody>' + stitchRows + '</tbody></table></div></div>' : '') +
+    (stitchRows ? '<div class="table-card"><div class="table-header-row"><span class="table-title">Stitching Progress</span></div><div class="table-wrap"><table><thead><tr><th class="stitching-th">#</th><th class="stitching-th">Party</th><th class="stitching-th">Sent Date</th><th class="stitching-th">Colour</th><th class="stitching-th">Expected Pcs</th><th class="stitching-th">Received Pcs</th></tr></thead><tbody>' + stitchRows + '</tbody></table></div></div>' : '') +
     '<div style="display:flex;gap:10px;justify-content:center;padding:10px 0 0 0;flex-wrap:wrap;" class="order-actions">' +
     '<button class="btn btn-primary btn-sm" onclick="printOrderSlip(\'' + order.id + '\', \'fabric\')">&#x1F5A8; Print Fabric</button>' +
     '<button class="btn btn-sm" style="background:#fce4ec;color:#c2185b;border:1px solid #f8bbd0;" onclick="printOrderSlip(\'' + order.id + '\', \'handwork\')">&#x270B; Print Hand Work</button>' +
@@ -1255,7 +1259,7 @@ function printPipeline(type) {
     });
   } else if (type === 'stitching') {
     title = 'Stitching Job Registry';
-    headers = ['Order No', 'Design No', 'Party Name', 'Sent Date', 'Expected Pcs', 'Received Pcs', 'Balance', 'Completion', 'Status'];
+    headers = ['Order No', 'Design No', 'Party Name', 'Sent Date', 'Colour', 'Expected Pcs', 'Received Pcs', 'Balance', 'Completion', 'Status'];
     var rawRows = getStitchingPipeline(cachedOrders);
 
     var q = document.getElementById('search-stitching') ? document.getElementById('search-stitching').value.trim().toLowerCase() : '';
@@ -1263,7 +1267,8 @@ function printPipeline(type) {
       rawRows = rawRows.filter(function (r) {
         return String(r.orderNo).toLowerCase().indexOf(q) !== -1 ||
           String(r.dNo).toLowerCase().indexOf(q) !== -1 ||
-          r.partyName.toLowerCase().indexOf(q) !== -1;
+          r.partyName.toLowerCase().indexOf(q) !== -1 ||
+          (r.colour || '').toLowerCase().indexOf(q) !== -1;
       });
     }
 
@@ -1273,6 +1278,7 @@ function printPipeline(type) {
         '<td>' + escHtml(r.dNo) + '</td>' +
         '<td>' + escHtml(r.partyName) + '</td>' +
         '<td>' + escHtml(r.sentDate) + '</td>' +
+        '<td>' + escHtml(r.colour || '—') + '</td>' +
         '<td>' + escHtml(r.expectedPcs) + ' pcs</td>' +
         '<td>' + escHtml(r.receivedPcs) + ' pcs</td>' +
         '<td>' + r.balance + ' pcs</td>' +
@@ -1648,6 +1654,7 @@ function addDesign() {
     '<table id="stitch-table-' + id + '">' +
     '<thead><tr>' +
     '<th style="background:var(--teal);color:#fff">#</th>' +
+    '<th style="background:var(--teal);color:#fff">Colour</th>' +
     '<th style="background:var(--teal);color:#fff">Expected Pcs</th>' +
     '<th style="background:var(--teal);color:#fff">Received Pcs</th>' +
     '<th style="background:var(--teal);color:#fff"></th>' +
@@ -1772,6 +1779,7 @@ function addStitchRow(designId) {
   tr.id = 'stitch-row-' + designId + '-' + rowId;
   tr.innerHTML =
     '<td>' + rowId + '</td>' +
+    '<td><input type="text" placeholder="Colour" /></td>' +
     '<td><input type="text" placeholder="Expected" /></td>' +
     '<td><input type="text" placeholder="Received" /></td>' +
     '<td><button class="remove-row-btn" onclick="removeRow(\'stitch-row-' + designId + '-' + rowId + '\')">&#x2715;</button></td>';
@@ -1892,13 +1900,15 @@ function collectRows(blockId) {
   if (isSectionChecked(blockId, 'stitch')) {
     document.querySelectorAll('#stitch-tbody-' + blockId + ' tr').forEach(function (row) {
       var inp = row.querySelectorAll('input');
-      var expectedPcs = inp[0] ? inp[0].value.trim() : '';
-      var receivedPcs = inp[1] ? inp[1].value.trim() : '';
+      var colour = inp[0] ? inp[0].value.trim() : '';
+      var expectedPcs = inp[1] ? inp[1].value.trim() : '';
+      var receivedPcs = inp[2] ? inp[2].value.trim() : '';
 
-      if (stitchParty || expectedPcs || receivedPcs) {
+      if (stitchParty || colour || expectedPcs || receivedPcs) {
         stitchRows.push({
           partyName: stitchParty,
           sentDate: stitchDate,
+          colour: colour,
           expectedPcs: expectedPcs,
           receivedPcs: receivedPcs
         });
@@ -1990,7 +2000,7 @@ function fillRows(blockId, data) {
     addStitchRow(blockId);
     var rowId = stitchCounters[blockId];
     var inp = document.getElementById('stitch-row-' + blockId + '-' + rowId).querySelectorAll('input');
-    [r.expectedPcs, r.receivedPcs]
+    [r.colour, r.expectedPcs, r.receivedPcs]
       .forEach(function (v, i) { if (inp[i]) inp[i].value = v || ''; });
   });
 }
@@ -2206,8 +2216,9 @@ async function editRecord(recordId) {
         var tr = document.getElementById('r-stitch-row-' + rId + '-' + rowId);
         if (tr) {
           var inputs = tr.querySelectorAll('input');
-          if (inputs[0]) inputs[0].value = r.expectedPcs || '';
-          if (inputs[1]) inputs[1].value = r.receivedPcs || '';
+          if (inputs[0]) inputs[0].value = r.colour || '';
+          if (inputs[1]) inputs[1].value = r.expectedPcs || '';
+          if (inputs[2]) inputs[2].value = r.receivedPcs || '';
         }
       });
 
@@ -2956,6 +2967,7 @@ function addReadyDesign() {
     '<table id="r-stitch-table-' + id + '">' +
     '<thead><tr>' +
     '<th style="background:var(--teal);color:#fff">#</th>' +
+    '<th style="background:var(--teal);color:#fff">Colour</th>' +
     '<th style="background:var(--teal);color:#fff">Expected Pcs</th>' +
     '<th style="background:var(--teal);color:#fff">Received Pcs</th>' +
     '<th style="background:var(--teal);color:#fff"></th>' +
@@ -3023,6 +3035,7 @@ function addReadyStitchRow(designId) {
   tr.id = 'r-stitch-row-' + designId + '-' + rowId;
   tr.innerHTML =
     '<td>' + rowId + '</td>' +
+    '<td><input type="text" placeholder="Colour" /></td>' +
     '<td><input type="text" placeholder="Expected" /></td>' +
     '<td><input type="text" placeholder="Received" /></td>' +
     '<td><button class="remove-row-btn" onclick="removeRow(\'r-stitch-row-' + designId + '-' + rowId + '\')">&#x2715;</button></td>';

@@ -260,9 +260,17 @@ function mapEmbRow(r) {
 }
 
 function mapStitchRow(r) {
+  var sentDate = r.sent_date || '';
+  var colour = r.colour || '';
+  if (!colour && sentDate.indexOf('||') !== -1) {
+    var parts = sentDate.split('||');
+    sentDate = parts[0];
+    colour = parts[1];
+  }
   return {
     partyName: r.party_name,
-    sentDate: r.sent_date,
+    sentDate: sentDate,
+    colour: colour,
     expectedPcs: r.expected_pcs,
     receivedPcs: r.received_pcs
   };
@@ -472,10 +480,11 @@ async function saveOrder(orderData) {
     await sbFetch('stitch_rows', {
       method: 'POST',
       body: orderData.stitchRows.map(function (r) {
+        var dateAndColour = (r.sentDate || '') + (r.colour ? '||' + r.colour : '');
         return {
           order_id: orderId,
           party_name: r.partyName,
-          sent_date: r.sentDate,
+          sent_date: dateAndColour,
           expected_pcs: r.expectedPcs,
           received_pcs: r.receivedPcs
         };
@@ -608,10 +617,11 @@ async function updateOrder(id, orderData) {
     await sbFetch('stitch_rows', {
       method: 'POST',
       body: orderData.stitchRows.map(function (r) {
+        var dateAndColour = (r.sentDate || '') + (r.colour ? '||' + r.colour : '');
         return {
           order_id: id,
           party_name: r.partyName,
-          sent_date: r.sentDate,
+          sent_date: dateAndColour,
           expected_pcs: r.expectedPcs,
           received_pcs: r.receivedPcs
         };
@@ -1151,6 +1161,7 @@ function getStitchingPipeline(orders) {
         date: order.date,
         partyName: r.partyName,
         sentDate: r.sentDate,
+        colour: r.colour || '',
         expectedPcs: r.expectedPcs,
         receivedPcs: r.receivedPcs,
         balance: balance,

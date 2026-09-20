@@ -60,7 +60,7 @@ function printAs(mode) {
       heading: 'Stitching Job Work',
       icon: '&#x2702;&#xFE0F;',
       thColor: '#00695c',
-      fields: ['Expected Pcs', 'Received Pcs'],
+      fields: ['Colour', 'Expected Pcs', 'Received Pcs'],
       tbodyPrefix: 'stitch-tbody-'
     }
   };
