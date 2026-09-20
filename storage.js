@@ -143,10 +143,19 @@ async function fetchAndCacheOrders(select) {
    LOAD SINGLE ORDER / DETAILS
 ───────────────────────────────────────── */
 async function loadOrder(id) {
+  if (!id || id === 'undefined' || id === 'null') {
+    throw new Error('Invalid Order ID');
+  }
+  var cached = (cachedOrders || []).find(function (o) { return String(o.id) === String(id); });
+  if (cached) return cached;
+
   var res = await sbFetch('orders?select=*,fabric_rows(*),emb_rows(*),stitch_rows(*)&id=eq.' + id);
-  if (!res.ok) throw new Error('Failed to load order');
+  if (!res.ok) {
+    var errObj = await res.json().catch(function() { return {}; });
+    throw new Error(errObj.message || 'Failed to load order');
+  }
   var data = await res.json();
-  if (!data || !data.length) throw new Error('Not found');
+  if (!data || !data.length) throw new Error('Order not found');
   return mapOrder(data[0]);
 }
 

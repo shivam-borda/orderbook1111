@@ -188,29 +188,37 @@ function printAs(mode) {
 
   // Open print window
   var win = window.open('', '_blank', 'width=900,height=700');
-  win.document.write(
-    '<!DOCTYPE html><html><head><meta charset="UTF-8"/>' +
-    '<title>' + cfg.title + '</title>' +
-    '<style>' +
-      'body{font-family:Segoe UI,Arial,sans-serif;padding:20px;background:#fff;color:#222;}' +
-      '.logo-wrap{text-align:center;margin-bottom:12px;}' +
-      '.logo-wrap img{max-height:150px;width:auto;}' +
-      'h1{text-align:center;font-size:1.3rem;letter-spacing:2px;text-transform:uppercase;' +
-         'color:' + cfg.thColor + ';margin-bottom:6px;}' +
-      'p.sub{text-align:center;font-size:0.75rem;color:#888;margin-bottom:20px;letter-spacing:1px;}' +
-      'table{border-collapse:collapse;width:100%;}' +
-      '@media print{' +
-        'body{padding:8px;}' +
-        '-webkit-print-color-adjust:exact;' +
-        'print-color-adjust:exact;' +
-      '}' +
-    '</style>' +
-    '</head><body>' +
-    '<div class="logo-wrap">' + (_logoDataUrl ? '<img src="' + _logoDataUrl + '" alt="Logo" />' : '') + '</div>' +
-    '<h1>' + cfg.icon + ' ' + cfg.heading + '</h1>' +
-    blocksHtml +
-    '<script>window.onload=function(){window.print();}<\/script>' +
-    '</body></html>'
-  );
-  win.document.close();
+  if (!win) {
+    alert('Pop-up window was blocked by your browser settings. Please allow pop-ups for this website in your browser to print.');
+    return;
+  }
+  try {
+    win.document.write(
+      '<!DOCTYPE html><html><head><meta charset="UTF-8"/>' +
+      '<title>' + cfg.title + '</title>' +
+      '<style>' +
+        'body{font-family:Segoe UI,Arial,sans-serif;padding:20px;background:#fff;color:#222;}' +
+        '.logo-wrap{text-align:center;margin-bottom:12px;}' +
+        '.logo-wrap img{max-height:150px;width:auto;}' +
+        'h1{text-align:center;font-size:1.3rem;letter-spacing:2px;text-transform:uppercase;' +
+           'color:' + cfg.thColor + ';margin-bottom:6px;}' +
+        'p.sub{text-align:center;font-size:0.75rem;color:#888;margin-bottom:20px;letter-spacing:1px;}' +
+        'table{border-collapse:collapse;width:100%;}' +
+        '@media print{' +
+          'body{padding:8px;}' +
+          '-webkit-print-color-adjust:exact;' +
+          'print-color-adjust:exact;' +
+        '}' +
+      '</style>' +
+      '</head><body>' +
+      '<div class="logo-wrap">' + (_logoDataUrl ? '<img src="' + _logoDataUrl + '" alt="Logo" />' : '') + '</div>' +
+      '<h1>' + cfg.icon + ' ' + cfg.heading + '</h1>' +
+      blocksHtml +
+      '<script>window.onload=function(){window.print();}<\/script>' +
+      '</body></html>'
+    );
+    win.document.close();
+  } catch (e) {
+    alert('Could not write to print window: ' + (e.message || e));
+  }
 }

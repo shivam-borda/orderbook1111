@@ -1288,25 +1288,33 @@ function printPipeline(type) {
     });
   }
 
-  var w = window.open();
-  w.document.write('<html><head><title>' + title + '</title>');
-  w.document.write('<style>');
-  w.document.write('body { font-family: sans-serif; padding: 25px; color: #333; }');
-  w.document.write('h1 { text-align: center; font-size: 1.5rem; text-transform: uppercase; margin-bottom: 20px; color: #1a237e; }');
-  w.document.write('table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }');
-  w.document.write('th, td { border: 1px solid #bdc3c7; padding: 8px 10px; text-align: center; }');
-  w.document.write('th { background: #f5f6fa; font-weight: 700; color: #2c3e50; text-transform: uppercase; font-size: 0.72rem; }');
-  w.document.write('tr:nth-child(even) { background: #fdfdfd; }');
-  w.document.write('</style></head><body>');
-  w.document.write('<h1>' + title + '</h1>');
-  w.document.write('<table><thead><tr>' + headers.map(h => '<th>' + h + '</th>').join('') + '</tr></thead><tbody>' + rows.join('') + '</tbody></table>');
-  w.document.write('</body></html>');
-  w.document.close();
+  var w = window.open('', '_blank');
+  if (!w) {
+    alert('Pop-up window was blocked by your browser settings. Please allow pop-ups for this website in your browser to print.');
+    return;
+  }
+  try {
+    w.document.write('<html><head><title>' + title + '</title>');
+    w.document.write('<style>');
+    w.document.write('body { font-family: sans-serif; padding: 25px; color: #333; }');
+    w.document.write('h1 { text-align: center; font-size: 1.5rem; text-transform: uppercase; margin-bottom: 20px; color: #1a237e; }');
+    w.document.write('table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }');
+    w.document.write('th, td { border: 1px solid #bdc3c7; padding: 8px 10px; text-align: center; }');
+    w.document.write('th { background: #f5f6fa; font-weight: 700; color: #2c3e50; text-transform: uppercase; font-size: 0.72rem; }');
+    w.document.write('tr:nth-child(even) { background: #fdfdfd; }');
+    w.document.write('</style></head><body>');
+    w.document.write('<h1>' + title + '</h1>');
+    w.document.write('<table><thead><tr>' + headers.map(h => '<th>' + h + '</th>').join('') + '</tr></thead><tbody>' + rows.join('') + '</tbody></table>');
+    w.document.write('</body></html>');
+    w.document.close();
 
-  setTimeout(function () {
-    w.print();
-    w.close();
-  }, 500);
+    setTimeout(function () {
+      w.print();
+      w.close();
+    }, 500);
+  } catch (e) {
+    alert('Could not write to print window: ' + (e.message || e));
+  }
 }
 
 // Print single slip helper
@@ -1315,17 +1323,29 @@ async function printOrderSlip(orderId, type) {
   if (loader) loader.style.display = 'flex';
 
   try {
-    // 1. Temporarily load into editing form structure
-    var order = await loadOrder(orderId);
+    if (!orderId || orderId === 'undefined' || orderId === 'null') {
+      throw new Error('Invalid Order ID');
+    }
 
-    // Clear and build one block to map target DOM for print.js
+    // 1. Try finding in cachedOrders first before network request
+    var order = (cachedOrders || []).find(function (o) {
+      return String(o.id) === String(orderId);
+    });
+    if (!order) {
+      order = await loadOrder(orderId);
+    }
+
     var designsWrap = document.getElementById('designs-container');
+    if (!designsWrap) {
+      throw new Error('Designs container element not found on page.');
+    }
+
     var oldDesigns = designsWrap.innerHTML;
     var oldDesignCount = designCount;
-    var oldFabricCounters = fabricCounters;
-    var oldEmbroideryCounters = embroideryCounters;
-    var oldHandworkCounters = handworkCounters;
-    var oldStitchCounters = stitchCounters;
+    var oldFabricCounters = Object.assign({}, fabricCounters);
+    var oldEmbroideryCounters = Object.assign({}, embroideryCounters);
+    var oldHandworkCounters = Object.assign({}, handworkCounters);
+    var oldStitchCounters = Object.assign({}, stitchCounters);
 
     designsWrap.innerHTML = '';
     designCount = 0;
@@ -1337,10 +1357,15 @@ async function printOrderSlip(orderId, type) {
     addDesign();
     var bId = designCount;
 
-    document.getElementById('orderno-' + bId).value = order.orderNo || '';
-    document.getElementById('dno-' + bId).value = order.dNo || '';
-    document.getElementById('fabric-' + bId).value = order.fabric || '';
-    document.getElementById('date-' + bId).value = order.date || '';
+    var elOrderNo = document.getElementById('orderno-' + bId);
+    var elDNo = document.getElementById('dno-' + bId);
+    var elFabric = document.getElementById('fabric-' + bId);
+    var elDate = document.getElementById('date-' + bId);
+
+    if (elOrderNo) elOrderNo.value = order.orderNo || '';
+    if (elDNo) elDNo.value = order.dNo || '';
+    if (elFabric) elFabric.value = order.fabric || '';
+    if (elDate) elDate.value = order.date || '';
 
     if (order.image) {
       setDropZoneImage(bId, order.image);
@@ -1365,7 +1390,7 @@ async function printOrderSlip(orderId, type) {
     stitchCounters = oldStitchCounters;
   } catch (err) {
     console.error(err);
-    alert('Error printing slip: ' + err.message);
+    alert('Error printing slip: ' + (err.message || err));
   } finally {
     if (loader) loader.style.display = 'none';
   }
